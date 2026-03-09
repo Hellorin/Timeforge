@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { formatDateKey, formatTime } from '../utils/time'
+import { formatDateKey, formatTime, toHoursMinutes } from '../utils/time'
 
-function HistoryDay({ day, todayKey }) {
+function HistoryDay({ day, todayKey, hoursFormat }) {
   const [expanded, setExpanded] = useState(false)
   const isToday = day.date === todayKey
 
@@ -15,7 +15,7 @@ function HistoryDay({ day, todayKey }) {
         <span className="history-date">
           {isToday ? 'Today' : formatDateKey(day.date)}
         </span>
-        <span className="history-total">{day.totalDecimal}h</span>
+        <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(day.totalMs) : day.totalDecimal}h</span>
         <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
       </button>
 
@@ -34,7 +34,7 @@ function HistoryDay({ day, todayKey }) {
   )
 }
 
-export default function HistoryList({ allDays, todayKey }) {
+export default function HistoryList({ allDays, todayKey, hoursFormat }) {
   // Show today in the list only if there's data, but skip if it's the only entry
   // with no completed sessions (already shown in TodaySummary above)
   const historyDays = allDays.filter(d => d.date !== todayKey)
@@ -46,7 +46,7 @@ export default function HistoryList({ allDays, todayKey }) {
       <h2 className="history-title">History</h2>
       <ul className="history-list">
         {historyDays.map(day => (
-          <HistoryDay key={day.date} day={day} todayKey={todayKey} />
+          <HistoryDay key={day.date} day={day} todayKey={todayKey} hoursFormat={hoursFormat} />
         ))}
       </ul>
     </section>

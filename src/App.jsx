@@ -12,6 +12,13 @@ export default function App() {
   const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions } = useTimeTracker()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
+  const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
+
+  function toggleHoursFormat() {
+    const next = hoursFormat === 'decimal' ? 'hhmm' : 'decimal'
+    setHoursFormat(next)
+    localStorage.setItem('hoursFormat', next)
+  }
 
   return (
     <div className="app">
@@ -30,8 +37,8 @@ export default function App() {
               todaySessions={todaySessions}
             />
             <LiveTimer isCheckedIn={isCheckedIn} todaySessions={todaySessions} />
-            <TodaySummary todaySessions={todaySessions} />
-            <HistoryList allDays={allDays} todayKey={todayKey} />
+            <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} />
+            <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} />
           </>
         ) : (
           <CalendarView

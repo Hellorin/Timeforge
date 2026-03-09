@@ -54,11 +54,10 @@ export function useTimeTracker() {
   // Build sorted history (newest first), excluding today if today has no sessions
   const allDays = Object.entries(data.days)
     .filter(([, sessions]) => sessions.length > 0)
-    .map(([date, sessions]) => ({
-      date,
-      sessions,
-      totalDecimal: toDecimalHours(sumSessionsMs(sessions))
-    }))
+    .map(([date, sessions]) => {
+      const totalMs = sumSessionsMs(sessions)
+      return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs) }
+    })
     .sort((a, b) => b.date.localeCompare(a.date))
 
   const setDaySessions = useCallback((dateKey, sessions) => {

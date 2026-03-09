@@ -164,6 +164,24 @@ body {
   color: var(--text-muted);
 }
 
+.format-toggle {
+  margin-top: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  background: var(--surface-2, #2a2a2a);
+  color: var(--text-muted);
+  border: 1px solid var(--border, #444);
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.format-toggle:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
 /* ─── History ───────────────────────────────────────────────────────────── */
 .history-section {
   width: 100%;

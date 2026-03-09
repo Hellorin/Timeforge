@@ -32,6 +32,17 @@ export function sumSessionsMs(sessions, now = Date.now()) {
 }
 
 /**
+ * Converts milliseconds to "HH:MM" string (floor, no rounding).
+ * e.g. 8h15m → "8:15"
+ */
+export function toHoursMinutes(ms) {
+  const totalMinutes = Math.floor(ms / 1000 / 60)
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return `${h}:${String(m).padStart(2, '0')}`
+}
+
+/**
  * Formats milliseconds as HH:MM:SS for the live timer.
  */
 export function formatDuration(ms) {
