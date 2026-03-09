@@ -61,12 +61,26 @@ export function useTimeTracker() {
     }))
     .sort((a, b) => b.date.localeCompare(a.date))
 
+  const setDaySessions = useCallback((dateKey, sessions) => {
+    setData(prev => {
+      const next = { ...prev, days: { ...prev.days } }
+      if (sessions.length === 0) {
+        delete next.days[dateKey]
+      } else {
+        next.days[dateKey] = sessions
+      }
+      saveData(next)
+      return next
+    })
+  }, [])
+
   return {
     isCheckedIn,
     checkIn,
     checkOut,
     todaySessions,
     todayKey,
-    allDays
+    allDays,
+    setDaySessions
   }
 }
