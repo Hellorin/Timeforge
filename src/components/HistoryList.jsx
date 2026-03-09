@@ -1,0 +1,54 @@
+import { useState } from 'react'
+import { formatDateKey, formatTime } from '../utils/time'
+
+function HistoryDay({ day, todayKey }) {
+  const [expanded, setExpanded] = useState(false)
+  const isToday = day.date === todayKey
+
+  return (
+    <li className="history-day">
+      <button
+        className="history-day-header"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
+        <span className="history-date">
+          {isToday ? 'Today' : formatDateKey(day.date)}
+        </span>
+        <span className="history-total">{day.totalDecimal}h</span>
+        <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <ul className="history-sessions">
+          {day.sessions.map((session, i) => (
+            <li key={i} className="history-session">
+              <span>{formatTime(session.checkIn)}</span>
+              <span className="session-arrow">→</span>
+              <span>{session.checkOut ? formatTime(session.checkOut) : '...'}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+export default function HistoryList({ allDays, todayKey }) {
+  // Show today in the list only if there's data, but skip if it's the only entry
+  // with no completed sessions (already shown in TodaySummary above)
+  const historyDays = allDays.filter(d => d.date !== todayKey)
+
+  if (historyDays.length === 0) return null
+
+  return (
+    <section className="history-section">
+      <h2 className="history-title">History</h2>
+      <ul className="history-list">
+        {historyDays.map(day => (
+          <HistoryDay key={day.date} day={day} todayKey={todayKey} />
+        ))}
+      </ul>
+    </section>
+  )
+}
