@@ -21,7 +21,7 @@ function currentHHMM() {
   return `${h}:${m}`
 }
 
-export default function DayEditModal({ dateKey, sessions, onSave, onClose }) {
+export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDayOff = false, onToggleDayOff }) {
   const DEFAULT_ROWS = [
     { checkIn: '08:00', checkOut: '12:00' },
     { checkIn: '13:00', checkOut: '17:00' },
@@ -75,7 +75,17 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose }) {
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
 
-        <div className="modal-sessions">
+        <div className="modal-day-off-row">
+          <button
+            className={`modal-day-off-btn${isDayOff ? ' modal-day-off-btn--active' : ''}`}
+            onClick={onToggleDayOff}
+            type="button"
+          >
+            {isDayOff ? 'Day Off ✓' : 'Mark as Day Off'}
+          </button>
+        </div>
+
+        <div className={`modal-sessions${isDayOff ? ' modal-sessions--dimmed' : ''}`}>
           {rows.length === 0 && (
             <p className="modal-empty">No sessions. Add one below.</p>
           )}

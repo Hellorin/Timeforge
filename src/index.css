@@ -433,6 +433,19 @@ body {
   opacity: 0.4;
 }
 
+.cal-day--day-off {
+  opacity: 0.6;
+}
+
+.cal-day-off-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
 .cal-day-tooltip {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -612,6 +625,38 @@ input[type="time"]:focus {
   outline: 2px solid var(--accent-in);
   outline-offset: -2px;
   border-color: transparent;
+}
+
+.modal-day-off-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+.modal-day-off-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.modal-day-off-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.modal-day-off-btn--active {
+  border-color: var(--accent-in);
+  color: var(--accent-in);
+}
+
+.modal-sessions--dimmed {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .modal-add-btn {

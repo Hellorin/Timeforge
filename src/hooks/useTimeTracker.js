@@ -6,9 +6,11 @@ const STORAGE_KEY = 'timeforge'
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : { days: {} }
+    const parsed = raw ? JSON.parse(raw) : { days: {}, daysOff: {} }
+    if (!parsed.daysOff) parsed.daysOff = {}
+    return parsed
   } catch {
-    return { days: {} }
+    return { days: {}, daysOff: {} }
   }
 }
 
@@ -73,6 +75,20 @@ export function useTimeTracker() {
     })
   }, [])
 
+  const toggleDayOff = useCallback((dateKey) => {
+    setData(prev => {
+      const daysOff = { ...prev.daysOff }
+      if (daysOff[dateKey]) {
+        delete daysOff[dateKey]
+      } else {
+        daysOff[dateKey] = true
+      }
+      const next = { ...prev, daysOff }
+      saveData(next)
+      return next
+    })
+  }, [])
+
   return {
     isCheckedIn,
     checkIn,
@@ -80,6 +96,8 @@ export function useTimeTracker() {
     todaySessions,
     todayKey,
     allDays,
-    setDaySessions
+    setDaySessions,
+    daysOff: data.daysOff,
+    toggleDayOff
   }
 }

@@ -9,7 +9,7 @@ import DayEditModal from './components/DayEditModal'
 import { formatDateKey } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff } = useTimeTracker()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
@@ -43,6 +43,7 @@ export default function App() {
         ) : (
           <CalendarView
             allDays={allDays}
+            daysOff={daysOff}
             onDayClick={(key, dayData) => setSelectedDay({ dateKey: key, sessions: dayData?.sessions ?? [] })}
           />
         )}
@@ -54,6 +55,8 @@ export default function App() {
           sessions={selectedDay.sessions}
           onSave={(dateKey, sessions) => { setDaySessions(dateKey, sessions); setSelectedDay(null) }}
           onClose={() => setSelectedDay(null)}
+          isDayOff={daysOff[selectedDay.dateKey] ?? false}
+          onToggleDayOff={() => toggleDayOff(selectedDay.dateKey)}
         />
       )}
 

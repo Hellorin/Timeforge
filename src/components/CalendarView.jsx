@@ -45,14 +45,14 @@ function buildCalendarRows(year, month) {
   return { rows, firstDay, lastDay }
 }
 
-function weekColor(total) {
-  if (total >= 40) return 'var(--accent-in)'
-  if (total >= 30) return '#fbbf24'
+function weekColor(total, target) {
+  if (total >= target) return 'var(--accent-in)'
+  if (total >= target * 0.75) return '#fbbf24'
   if (total > 0) return 'var(--accent-out)'
   return null
 }
 
-export default function CalendarView({ allDays, onDayClick }) {
+export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
   const today = getTodayKey()
   const [year, month] = (() => {
     const d = new Date()
@@ -107,8 +107,11 @@ export default function CalendarView({ allDays, onDayClick }) {
             const key = toDateKey(date)
             return sum + (dayMap.get(key)?.totalDecimal ?? 0)
           }, 0)
-          const color = weekColor(weekTotal)
-          const pct = Math.min((weekTotal / 40) * 100, 100)
+          // row[0..4] = Mon–Fri; only weekdays count toward target
+          const daysOffCount = row.slice(0, 5).filter(d => daysOff[toDateKey(d)]).length
+          const weekTarget = (5 - daysOffCount) * 8
+          const color = weekColor(weekTotal, weekTarget)
+          const pct = weekTarget > 0 ? Math.min((weekTotal / weekTarget) * 100, 100) : 0
 
           return (
             <div key={ri} className="cal-row">
@@ -118,11 +121,13 @@ export default function CalendarView({ allDays, onDayClick }) {
                 const isToday = key === today
                 const dayData = dayMap.get(key)
                 const hasSessions = dayData && dayData.sessions.length > 0
+                const isDayOff = !!daysOff[key]
 
                 let cls = 'cal-day'
                 if (!isCurrentMonth) cls += ' cal-day--other-month'
                 if (isToday) cls += ' cal-day--today'
                 if (hasSessions) cls += ' cal-day--has-sessions'
+                if (isDayOff) cls += ' cal-day--day-off'
 
                 return (
                   <div
@@ -133,7 +138,8 @@ export default function CalendarView({ allDays, onDayClick }) {
                     onMouseLeave={() => setHoveredDay(null)}
                   >
                     <span className="cal-day-num">{date.getDate()}</span>
-                    {hasSessions && <span className="cal-day-dot" />}
+                    {isDayOff && <span className="cal-day-off-badge">off</span>}
+                    {!isDayOff && hasSessions && <span className="cal-day-dot" />}
                     {hasSessions && hoveredDay === key && (
                       <div className="cal-day-tooltip">
                         <strong>{dayData.totalDecimal.toFixed(1)}h</strong>
@@ -151,7 +157,7 @@ export default function CalendarView({ allDays, onDayClick }) {
                     <div className="cal-week-total" style={{ color: color ?? 'var(--text-muted)' }}>
                       {weekTotal.toFixed(1)}h
                     </div>
-                    <div className="cal-week-sub">/ 40h</div>
+                    <div className="cal-week-sub">/ {weekTarget}h</div>
                     <div className="cal-week-bar-track">
                       <div
                         className="cal-week-bar-fill"
