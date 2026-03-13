@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { getTodayKey, sumSessionsMs, toDecimalHours } from '../utils/time'
+import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend } from '../utils/time'
 
 const STORAGE_KEY = 'timeforge'
 
@@ -27,14 +27,17 @@ export function useTimeTracker() {
 
   const checkIn = useCallback(() => {
     setData(prev => {
+      const key = getTodayKey()
+      // Prevent check-in on days off (including weekends)
+      if (prev.daysOff[key] || isWeekend(key)) return prev
       const next = { ...prev, days: { ...prev.days } }
-      const todaySessions = [...(next.days[getTodayKey()] || [])]
+      const todaySessions = [...(next.days[key] || [])]
       // Prevent double check-in
       if (todaySessions.length > 0 && todaySessions[todaySessions.length - 1].checkOut === null) {
         return prev
       }
       todaySessions.push({ checkIn: new Date().toISOString(), checkOut: null })
-      next.days[getTodayKey()] = todaySessions
+      next.days[key] = todaySessions
       saveData(next)
       return next
     })
@@ -89,6 +92,8 @@ export function useTimeTracker() {
     })
   }, [])
 
+  const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
+
   return {
     isCheckedIn,
     checkIn,
@@ -98,6 +103,7 @@ export function useTimeTracker() {
     allDays,
     setDaySessions,
     daysOff: data.daysOff,
-    toggleDayOff
+    toggleDayOff,
+    isTodayOff
   }
 }

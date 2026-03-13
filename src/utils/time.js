@@ -69,6 +69,15 @@ export function formatDateKey(key) {
 }
 
 /**
+ * Returns true if the given "YYYY-MM-DD" date key falls on a Saturday or Sunday.
+ */
+export function isWeekend(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const dow = new Date(y, m - 1, d).getDay() // 0=Sun, 6=Sat
+  return dow === 0 || dow === 6
+}
+
+/**
  * Formats an ISO timestamp as a local time string, e.g. "09:03".
  */
 export function formatTime(isoString) {

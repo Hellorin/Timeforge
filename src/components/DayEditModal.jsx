@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { formatDateKey } from '../utils/time'
+import { formatDateKey, isWeekend } from '../utils/time'
 
 function isoToHHMM(iso) {
   const d = new Date(iso)
@@ -27,13 +27,15 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDay
     { checkIn: '13:00', checkOut: '17:00' },
   ]
 
+  const isWeekendDay = isWeekend(dateKey)
+
   const [rows, setRows] = useState(() =>
     sessions.length > 0
       ? sessions.map(s => ({
           checkIn: s.checkIn ? isoToHHMM(s.checkIn) : '',
           checkOut: s.checkOut ? isoToHHMM(s.checkOut) : ''
         }))
-      : DEFAULT_ROWS
+      : isDayOff || isWeekendDay ? [] : DEFAULT_ROWS
   )
 
   const handleKeyDown = useCallback((e) => {
@@ -76,13 +78,17 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDay
         </div>
 
         <div className="modal-day-off-row">
-          <button
-            className={`modal-day-off-btn${isDayOff ? ' modal-day-off-btn--active' : ''}`}
-            onClick={onToggleDayOff}
-            type="button"
-          >
-            {isDayOff ? 'Day Off ✓' : 'Mark as Day Off'}
-          </button>
+          {isWeekendDay ? (
+            <span className="modal-day-off-btn modal-day-off-btn--active modal-day-off-btn--static">Weekend</span>
+          ) : (
+            <button
+              className={`modal-day-off-btn${isDayOff ? ' modal-day-off-btn--active' : ''}`}
+              onClick={onToggleDayOff}
+              type="button"
+            >
+              {isDayOff ? 'Day Off ✓' : 'Mark as Day Off'}
+            </button>
+          )}
         </div>
 
         <div className={`modal-sessions${isDayOff ? ' modal-sessions--dimmed' : ''}`}>

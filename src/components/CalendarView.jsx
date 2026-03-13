@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getTodayKey } from '../utils/time'
+import { getTodayKey, isWeekend } from '../utils/time'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -121,7 +121,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                 const isToday = key === today
                 const dayData = dayMap.get(key)
                 const hasSessions = dayData && dayData.sessions.length > 0
-                const isDayOff = !!daysOff[key]
+                const isDayOff = !!daysOff[key] || isWeekend(key)
 
                 let cls = 'cal-day'
                 if (!isCurrentMonth) cls += ' cal-day--other-month'
