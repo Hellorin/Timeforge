@@ -35,9 +35,8 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
 }
 
 export default function HistoryList({ allDays, todayKey, hoursFormat }) {
-  // Show today in the list only if there's data, but skip if it's the only entry
-  // with no completed sessions (already shown in TodaySummary above)
-  const historyDays = allDays.filter(d => d.date !== todayKey)
+  const currentMonthPrefix = todayKey.slice(0, 7) // "YYYY-MM"
+  const historyDays = allDays.filter(d => d.date !== todayKey && d.date.startsWith(currentMonthPrefix))
 
   if (historyDays.length === 0) return null
 
