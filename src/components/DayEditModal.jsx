@@ -110,7 +110,7 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDay
           ))}
         </div>
 
-        <button className="modal-add-btn" onClick={addSession}>+ Add Session</button>
+        <button className="modal-add-btn" onClick={addSession} disabled={isDayOff}>+ Add Session</button>
 
         <div className="modal-actions">
           <button className="modal-save-btn" onClick={handleSave}>Save</button>

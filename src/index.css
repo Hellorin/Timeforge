@@ -671,9 +671,14 @@ input[type="time"]:focus {
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.modal-add-btn:hover {
+.modal-add-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
+}
+
+.modal-add-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .modal-actions {
