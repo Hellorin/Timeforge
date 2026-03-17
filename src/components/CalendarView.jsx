@@ -110,7 +110,19 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
           // row[0..4] = Mon–Fri; only weekdays count toward target
           const daysOffCount = row.slice(0, 5).filter(d => daysOff[toDateKey(d)]).length
           const weekTarget = (5 - daysOffCount) * 8
-          const color = weekColor(weekTotal, weekTarget)
+
+          // For the current week, prorate the target based on workdays elapsed so far
+          const isCurrentWeek = row.some(date => toDateKey(date) === today)
+          let effectiveTarget = weekTarget
+          if (isCurrentWeek) {
+            const daysElapsed = row.slice(0, 5).filter(d => {
+              const key = toDateKey(d)
+              return !daysOff[key] && !isWeekend(key) && key <= today
+            }).length
+            effectiveTarget = daysElapsed * 8
+          }
+
+          const color = weekColor(weekTotal, effectiveTarget)
           const pct = weekTarget > 0 ? Math.min((weekTotal / weekTarget) * 100, 100) : 0
 
           return (
