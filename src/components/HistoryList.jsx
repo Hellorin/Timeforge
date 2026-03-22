@@ -1,5 +1,21 @@
-import { useState } from 'react'
-import { formatDateKey, formatTime, toHoursMinutes } from '../utils/time'
+import { useState, useMemo } from 'react'
+import { formatDateKey, formatTime, toHoursMinutes, toDecimalHours, getWeekDays } from '../utils/time'
+
+function getWeekKey(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const weekDays = getWeekDays(new Date(y, m - 1, d))
+  const mon = weekDays[0]
+  return `${mon.getFullYear()}-${String(mon.getMonth() + 1).padStart(2, '0')}-${String(mon.getDate()).padStart(2, '0')}`
+}
+
+function getWeekLabel(weekKey) {
+  const [y, m, d] = weekKey.split('-').map(Number)
+  const monday = new Date(y, m - 1, d)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = date => date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return `${fmt(monday)} – ${fmt(sunday)}`
+}
 
 function HistoryDay({ day, todayKey, hoursFormat }) {
   const [expanded, setExpanded] = useState(false)
@@ -34,18 +50,65 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
   )
 }
 
+function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded }) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const totalMs = days.reduce((sum, d) => sum + d.totalMs, 0)
+  const label = getWeekLabel(weekKey)
+
+  return (
+    <li className="history-week">
+      <button
+        className="history-week-header"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
+        <span className="history-week-label">{label}</span>
+        <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)}h</span>
+        <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <ul className="history-days">
+          {days.map(day => (
+            <HistoryDay key={day.date} day={day} todayKey={todayKey} hoursFormat={hoursFormat} />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
 export default function HistoryList({ allDays, todayKey, hoursFormat }) {
-  const currentMonthPrefix = todayKey.slice(0, 7) // "YYYY-MM"
+  const currentMonthPrefix = todayKey.slice(0, 7)
+  const currentWeekKey = getWeekKey(todayKey)
+
   const historyDays = allDays.filter(d => d.date !== todayKey && d.date.startsWith(currentMonthPrefix))
 
-  if (historyDays.length === 0) return null
+  const weekGroups = useMemo(() => {
+    const groups = new Map()
+    for (const day of historyDays) {
+      const wk = getWeekKey(day.date)
+      if (!groups.has(wk)) groups.set(wk, [])
+      groups.get(wk).push(day)
+    }
+    return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]))
+  }, [historyDays])
+
+  if (weekGroups.length === 0) return null
 
   return (
     <section className="history-section">
       <h2 className="history-title">History</h2>
-      <ul className="history-list">
-        {historyDays.map(day => (
-          <HistoryDay key={day.date} day={day} todayKey={todayKey} hoursFormat={hoursFormat} />
+      <ul className="history-weeks">
+        {weekGroups.map(([weekKey, days]) => (
+          <HistoryWeek
+            key={weekKey}
+            weekKey={weekKey}
+            days={days}
+            todayKey={todayKey}
+            hoursFormat={hoursFormat}
+            defaultExpanded={weekKey === currentWeekKey}
+          />
         ))}
       </ul>
     </section>

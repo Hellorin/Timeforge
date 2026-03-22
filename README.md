@@ -12,6 +12,7 @@ A lightweight work hours tracker PWA built with React and Vite. Track your daily
 - **Day edit modal** — Edit or delete individual sessions for any past day
 - **Days off & weekend awareness** — Check-in is disabled on weekends and manually marked days off
 - **Weekly progress indicator** — Current week total is highlighted in green when you're on track based on days elapsed
+- **Milestone celebrations** — Confetti animation and a brief overlay card when you hit your daily (8 h) or prorated weekly target
 - **Offline-first PWA** — Installable on any device, works without internet
 - **Local storage** — No backend, no account — data stays on your device
 
