@@ -737,3 +737,53 @@ input[type="time"]:focus {
 .modal-save-btn:hover {
   opacity: 0.85;
 }
+
+/* ─── Celebration Overlay ───────────────────────────────────────────────── */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: celebration-fade 3s ease forwards;
+}
+
+@keyframes celebration-fade {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.celebration-card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  padding: 2rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  max-width: 320px;
+  width: 90%;
+}
+
+.celebration-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.celebration-title {
+  margin: 0 0 0.4rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--accent-in);
+}
+
+.celebration-sub {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend } from '../utils/time'
+import { useState, useCallback, useRef } from 'react'
+import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend, getWeekDays, computeWeekProgress } from '../utils/time'
 
 const STORAGE_KEY = 'timeforge'
 
@@ -20,6 +20,7 @@ function saveData(data) {
 
 export function useTimeTracker() {
   const [data, setData] = useState(loadData)
+  const milestoneCallbackRef = useRef(null)
 
   const todayKey = getTodayKey()
   const todaySessions = data.days[todayKey] || []
@@ -49,9 +50,31 @@ export function useTimeTracker() {
       const sessions = [...(prev.days[key] || [])]
       const lastIdx = sessions.length - 1
       if (lastIdx < 0 || sessions[lastIdx].checkOut !== null) return prev
-      sessions[lastIdx] = { ...sessions[lastIdx], checkOut: new Date().toISOString() }
+
+      const now = Date.now()
+
+      // BEFORE: only previously closed sessions (excludes the current open session)
+      const closedSessions = sessions.slice(0, lastIdx)
+      const dailyBefore = toDecimalHours(sumSessionsMs(closedSessions))
+      const weekDays = getWeekDays()
+      const beforeDays = { ...prev.days, [key]: closedSessions }
+      const { weekTotal: weekBefore, effectiveTarget } = computeWeekProgress(weekDays, beforeDays, prev.daysOff)
+
+      // Apply mutation
+      sessions[lastIdx] = { ...sessions[lastIdx], checkOut: new Date(now).toISOString() }
       const next = { ...prev, days: { ...prev.days, [key]: sessions } }
       saveData(next)
+
+      // AFTER: all sessions closed including the one just closed
+      const dailyAfter = toDecimalHours(sumSessionsMs(sessions))
+      const { weekTotal: weekAfter } = computeWeekProgress(weekDays, next.days, next.daysOff)
+
+      // Detect milestone crossing
+      const crossedDaily = dailyBefore < 8 && dailyAfter >= 8
+      const crossedWeekly = effectiveTarget > 0 && weekBefore < effectiveTarget && weekAfter >= effectiveTarget
+      const milestone = crossedWeekly ? 'weekly' : crossedDaily ? 'daily' : null
+      if (milestone) milestoneCallbackRef.current?.(milestone)
+
       return next
     })
   }, [])
@@ -94,6 +117,8 @@ export function useTimeTracker() {
 
   const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
 
+  const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
+
   return {
     isCheckedIn,
     checkIn,
@@ -104,6 +129,7 @@ export function useTimeTracker() {
     setDaySessions,
     daysOff: data.daysOff,
     toggleDayOff,
-    isTodayOff
+    isTodayOff,
+    setMilestoneCallback
   }
 }

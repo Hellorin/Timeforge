@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTimeTracker } from './hooks/useTimeTracker'
 import ActionButton from './components/ActionButton'
 import LiveTimer from './components/LiveTimer'
@@ -6,13 +6,20 @@ import TodaySummary from './components/TodaySummary'
 import HistoryList from './components/HistoryList'
 import CalendarView from './components/CalendarView'
 import DayEditModal from './components/DayEditModal'
+import CelebrationOverlay from './components/CelebrationOverlay'
 import { formatDateKey, isWeekend } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback } = useTimeTracker()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
+  const [celebrationMilestone, setCelebrationMilestone] = useState(null)
+
+  useEffect(() => {
+    setMilestoneCallback(type => setCelebrationMilestone(type))
+    return () => setMilestoneCallback(null)
+  }, [setMilestoneCallback])
 
   function toggleHoursFormat() {
     const next = hoursFormat === 'decimal' ? 'hhmm' : 'decimal'
@@ -21,6 +28,11 @@ export default function App() {
   }
 
   return (
+    <>
+    <CelebrationOverlay
+      milestone={celebrationMilestone}
+      onDismiss={() => setCelebrationMilestone(null)}
+    />
     <div className="app">
       <header className="app-header">
         <h1 className="app-title">Timeforge</h1>
@@ -78,5 +90,6 @@ export default function App() {
         </button>
       </nav>
     </div>
+    </>
   )
 }

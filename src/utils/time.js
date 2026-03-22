@@ -78,6 +78,62 @@ export function isWeekend(dateKey) {
 }
 
 /**
+ * Returns the 7 Date objects (Mon–Sun) for the week containing referenceDate.
+ */
+export function getWeekDays(referenceDate = new Date()) {
+  const dow = referenceDate.getDay() // 0=Sun, 6=Sat
+  const stepsBack = dow === 0 ? 6 : dow - 1 // steps back to Monday
+  const monday = new Date(referenceDate)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(monday.getDate() - stepsBack)
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    days.push(d)
+  }
+  return days
+}
+
+/**
+ * Given the 7 Date objects for a week, the raw days map from localStorage,
+ * and the daysOff map, returns weekly progress metrics.
+ * Mirrors the logic in CalendarView week summary.
+ */
+export function computeWeekProgress(weekDays, days, daysOff) {
+  const today = getTodayKey()
+
+  function toKey(date) {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const weekTotal = weekDays.reduce((sum, date) => {
+    const key = toKey(date)
+    const sessions = days[key] || []
+    return sum + toDecimalHours(sumSessionsMs(sessions))
+  }, 0)
+
+  const weekdays = weekDays.slice(0, 5) // Mon–Fri
+  const daysOffCount = weekdays.filter(d => daysOff[toKey(d)]).length
+  const weekTarget = (5 - daysOffCount) * 8
+
+  const isCurrentWeek = weekDays.some(d => toKey(d) === today)
+  let effectiveTarget = weekTarget
+  if (isCurrentWeek) {
+    const daysElapsed = weekdays.filter(d => {
+      const key = toKey(d)
+      return !daysOff[key] && !isWeekend(key) && key <= today
+    }).length
+    effectiveTarget = daysElapsed * 8
+  }
+
+  return { weekTotal, weekTarget, effectiveTarget, isCurrentWeek }
+}
+
+/**
  * Formats an ISO timestamp as a local time string, e.g. "09:03".
  */
 export function formatTime(isoString) {
