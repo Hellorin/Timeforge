@@ -58,7 +58,7 @@ export function useTimeTracker() {
       const dailyBefore = toDecimalHours(sumSessionsMs(closedSessions))
       const weekDays = getWeekDays()
       const beforeDays = { ...prev.days, [key]: closedSessions }
-      const { weekTotal: weekBefore, effectiveTarget } = computeWeekProgress(weekDays, beforeDays, prev.daysOff)
+      const { weekTotal: weekBefore, weekTarget } = computeWeekProgress(weekDays, beforeDays, prev.daysOff)
 
       // Apply mutation
       sessions[lastIdx] = { ...sessions[lastIdx], checkOut: new Date(now).toISOString() }
@@ -71,7 +71,7 @@ export function useTimeTracker() {
 
       // Detect milestone crossing
       const crossedDaily = dailyBefore < 8 && dailyAfter >= 8
-      const crossedWeekly = effectiveTarget > 0 && weekBefore < effectiveTarget && weekAfter >= effectiveTarget
+      const crossedWeekly = weekTarget > 0 && weekBefore < weekTarget && weekAfter >= weekTarget
       const milestone = crossedWeekly ? 'weekly' : crossedDaily ? 'daily' : null
       if (milestone) milestoneCallbackRef.current?.(milestone)
 
