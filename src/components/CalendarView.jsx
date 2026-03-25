@@ -132,8 +132,8 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                 const isCurrentMonth = date >= firstDay && date <= lastDay
                 const isToday = key === today
                 const dayData = dayMap.get(key)
-                const hasSessions = dayData && dayData.sessions.length > 0
                 const isDayOff = !!daysOff[key] || isWeekend(key)
+                const hasSessions = !isDayOff && dayData && dayData.sessions.length > 0
 
                 let cls = 'cal-day'
                 if (!isCurrentMonth) cls += ' cal-day--other-month'

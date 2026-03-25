@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sumSessionsMs, toDecimalHours, toHoursMinutes } from '../utils/time'
 
-export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat }) {
+export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff }) {
   const [now, setNow] = useState(Date.now())
 
   // Refresh every 30s to keep total up to date while checked in
@@ -10,7 +10,7 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
     return () => clearInterval(id)
   }, [])
 
-  if (todaySessions.length === 0) return null
+  if (isTodayOff || todaySessions.length === 0) return null
 
   const totalMs = sumSessionsMs(todaySessions, now)
   const displayTotal = hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)

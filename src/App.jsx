@@ -50,7 +50,7 @@ export default function App() {
               isTodayOff={isTodayOff}
             />
             <LiveTimer isCheckedIn={isCheckedIn} todaySessions={todaySessions} />
-            <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} />
+            <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} isTodayOff={isTodayOff} />
             <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} />
           </>
         ) : (
