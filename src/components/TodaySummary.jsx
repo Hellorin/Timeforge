@@ -4,11 +4,14 @@ import { sumSessionsMs, toDecimalHours, toHoursMinutes } from '../utils/time'
 export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff }) {
   const [now, setNow] = useState(Date.now())
 
-  // Refresh every 30s to keep total up to date while checked in
+  const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
+
+  // Refresh every second while checked in, every 30s otherwise
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000)
+    const ms = isCheckedIn ? 1000 : 30000
+    const id = setInterval(() => setNow(Date.now()), ms)
     return () => clearInterval(id)
-  }, [])
+  }, [isCheckedIn])
 
   if (isTodayOff || todaySessions.length === 0) return null
 

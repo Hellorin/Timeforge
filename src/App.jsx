@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTimeTracker } from './hooks/useTimeTracker'
-import ActionButton from './components/ActionButton'
+import SlideToggle from './components/SlideToggle'
 import LiveTimer from './components/LiveTimer'
 import TodaySummary from './components/TodaySummary'
 import HistoryList from './components/HistoryList'
@@ -20,6 +20,12 @@ export default function App() {
     setMilestoneCallback(type => setCelebrationMilestone(type))
     return () => setMilestoneCallback(null)
   }, [setMilestoneCallback])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isCheckedIn ? 'light' : 'dark')
+    const color = isCheckedIn ? '#fffbf5' : '#1a1a2e'
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
+  }, [isCheckedIn])
 
   function toggleHoursFormat() {
     const next = hoursFormat === 'decimal' ? 'hhmm' : 'decimal'
@@ -42,7 +48,7 @@ export default function App() {
       <main className="app-main">
         {view === 'tracker' ? (
           <>
-            <ActionButton
+            <SlideToggle
               isCheckedIn={isCheckedIn}
               onCheckIn={checkIn}
               onCheckOut={checkOut}
