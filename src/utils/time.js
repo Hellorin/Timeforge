@@ -112,6 +112,7 @@ export function computeWeekProgress(weekDays, days, daysOff) {
 
   const weekTotal = weekDays.reduce((sum, date) => {
     const key = toKey(date)
+    if (daysOff[key]) return sum
     const sessions = days[key] || []
     return sum + toDecimalHours(sumSessionsMs(sessions))
   }, 0)

@@ -83,8 +83,9 @@ export function useTimeTracker() {
   const allDays = Object.entries(data.days)
     .filter(([, sessions]) => sessions.length > 0)
     .map(([date, sessions]) => {
-      const totalMs = sumSessionsMs(sessions)
-      return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs) }
+      const isOff = !!(data.daysOff[date] || isWeekend(date))
+      const totalMs = isOff ? 0 : sumSessionsMs(sessions)
+      return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs), isOff }
     })
     .sort((a, b) => b.date.localeCompare(a.date))
 

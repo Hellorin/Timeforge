@@ -82,7 +82,7 @@ export default function HistoryList({ allDays, todayKey, hoursFormat }) {
   const currentMonthPrefix = todayKey.slice(0, 7)
   const currentWeekKey = getWeekKey(todayKey)
 
-  const historyDays = allDays.filter(d => d.date !== todayKey && d.date.startsWith(currentMonthPrefix))
+  const historyDays = allDays.filter(d => d.date !== todayKey && d.date.startsWith(currentMonthPrefix) && !d.isOff)
 
   const weekGroups = useMemo(() => {
     const groups = new Map()
