@@ -44,25 +44,34 @@ export default function SlideToggle({ isCheckedIn, onCheckIn, onCheckOut, todayS
   function handleTouchStart(e) {
     if (isDisabled) return
     const t = e.touches[0]
-    drag.current.startX    = t.clientX
-    drag.current.startLeft = isCheckedIn ? KNOB_WORK : KNOB_REST
-    drag.current.moved     = false
+    drag.current.startX      = t.clientX
+    drag.current.startLeft   = isCheckedIn ? KNOB_WORK : KNOB_REST
+    drag.current.moved       = false
     drag.current.currentLeft = drag.current.startLeft
+    document.documentElement.classList.add('theme-dragging')
   }
 
   function handleTouchMove(e) {
     if (isDisabled) return
-    const delta  = e.touches[0].clientX - drag.current.startX
+    const delta   = e.touches[0].clientX - drag.current.startX
     const newLeft = Math.max(KNOB_REST, Math.min(KNOB_WORK, drag.current.startLeft + delta))
 
     if (Math.abs(delta) > 4) drag.current.moved = true
     drag.current.currentLeft = newLeft
     setKnobLeft(newLeft)
+
+    // Drive the global theme gradient in real time
+    const progress = (newLeft - KNOB_REST) / (KNOB_WORK - KNOB_REST)
+    document.documentElement.style.setProperty('--theme-mix', `${(progress * 100).toFixed(1)}%`)
   }
 
   function handleTouchEnd() {
+    // Re-enable the transition so the theme snaps smoothly to 0% or 100%
+    document.documentElement.classList.remove('theme-dragging')
+
     if (!drag.current.moved) {
       // Tiny movement — treat as a tap; let the click handler fire normally
+      document.documentElement.style.removeProperty('--theme-mix')
       setKnobLeft(null)
       return
     }
@@ -71,6 +80,10 @@ export default function SlideToggle({ isCheckedIn, onCheckIn, onCheckOut, todayS
     drag.current.wasDrag = true
     drag.current.moved   = false
     setKnobLeft(null)
+
+    // Remove inline override — data-theme attribute (set by App.jsx) takes over
+    // and the css transition animates from wherever the drag left off
+    document.documentElement.style.removeProperty('--theme-mix')
 
     if (shouldBeWorking !== isCheckedIn) toggle()
   }

@@ -1,36 +1,42 @@
 /* ─── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Typed custom property so CSS transitions and color-mix() work on it */
+@property --theme-mix {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
 :root {
-  --bg: #1a1a2e;
-  --surface: #16213e;
-  --surface-alt: #0f3460;
-  --accent-in: #4ade80;    /* green for check-in */
-  --accent-out: #f87171;   /* red for check-out */
-  --text: #e2e8f0;
-  --text-muted: #94a3b8;
+  /* All colors interpolate between dark (0%) and light (100%) via --theme-mix */
+  --bg:          color-mix(in srgb, #fffbf5 var(--theme-mix), #1a1a2e);
+  --surface:     color-mix(in srgb, #fff8ee var(--theme-mix), #16213e);
+  --surface-alt: color-mix(in srgb, #fdebd0 var(--theme-mix), #0f3460);
+  --accent-in:   color-mix(in srgb, #16a34a var(--theme-mix), #4ade80);
+  --accent-out:  color-mix(in srgb, #dc2626 var(--theme-mix), #f87171);
+  --text:        color-mix(in srgb, #1c1917 var(--theme-mix), #e2e8f0);
+  --text-muted:  color-mix(in srgb, #78716c var(--theme-mix), #94a3b8);
   --radius: 12px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
 
-[data-theme="light"] {
-  --bg:          #fffbf5;
-  --surface:     #fff8ee;
-  --surface-alt: #fdebd0;
-  --accent-in:   #16a34a;
-  --accent-out:  #dc2626;
-  --text:        #1c1917;
-  --text-muted:  #78716c;
-}
+/* Light theme = fully mixed */
+[data-theme="light"] { --theme-mix: 100%; }
+
+/* Smooth transition for click-toggle and drag snap */
+html { transition: --theme-mix 0.35s ease; }
+
+/* Disable transition while actively dragging so knob leads, not lags */
+html.theme-dragging { transition: none; }
 
 body {
   margin: 0;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
-  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 /* ─── Layout ────────────────────────────────────────────────────────────── */
