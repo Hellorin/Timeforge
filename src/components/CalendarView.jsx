@@ -45,10 +45,10 @@ function buildCalendarRows(year, month) {
   return { rows, firstDay, lastDay }
 }
 
-function weekColor(total, target) {
-  if (total >= target) return 'var(--accent-in)'
-  if (total >= target * 0.75) return '#fbbf24'
-  if (total > 0) return 'var(--accent-out)'
+function weekColor(totalMs, targetMs) {
+  if (totalMs >= targetMs) return 'var(--accent-in)'
+  if (totalMs >= targetMs * 0.75) return '#fbbf24'
+  if (totalMs > 0) return 'var(--accent-out)'
   return null
 }
 
@@ -107,6 +107,11 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
             const key = toDateKey(date)
             return sum + (dayMap.get(key)?.totalDecimal ?? 0)
           }, 0)
+          // Use raw ms for comparisons to avoid per-day decimal rounding skewing the total
+          const weekTotalMs = row.reduce((sum, date) => {
+            const key = toDateKey(date)
+            return sum + (dayMap.get(key)?.totalMs ?? 0)
+          }, 0)
           // row[0..4] = Mon–Fri; only weekdays count toward target
           const daysOffCount = row.slice(0, 5).filter(d => daysOff[toDateKey(d)]).length
           const weekTarget = (5 - daysOffCount) * 8
@@ -122,8 +127,10 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
             effectiveTarget = daysElapsed * 8
           }
 
-          const color = weekColor(weekTotal, effectiveTarget)
-          const pct = weekTarget > 0 ? Math.min((weekTotal / weekTarget) * 100, 100) : 0
+          const effectiveTargetMs = effectiveTarget * 3600000
+          const weekTargetMs = weekTarget * 3600000
+          const color = weekColor(weekTotalMs, effectiveTargetMs)
+          const pct = weekTargetMs > 0 ? Math.min((weekTotalMs / weekTargetMs) * 100, 100) : 0
 
           return (
             <div key={ri} className="cal-row">
