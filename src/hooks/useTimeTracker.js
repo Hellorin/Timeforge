@@ -1,6 +1,10 @@
 import { useState, useCallback, useRef } from 'react'
 import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend, getWeekDays, computeWeekProgress } from '../utils/time'
 
+function toKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 const STORAGE_KEY = 'timeforge'
 
 function loadData() {
@@ -120,6 +124,18 @@ export function useTimeTracker() {
 
   const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
 
+  // Week progress (live portion from today is added in TodaySummary)
+  const weekDays = getWeekDays()
+  const weekdays = weekDays.slice(0, 5)
+  const daysOffCount = weekdays.filter(d => data.daysOff[toKey(d)]).length
+  const weekTarget = (5 - daysOffCount) * 8
+  const weekTotalOtherDays = weekDays.reduce((sum, date) => {
+    const key = toKey(date)
+    if (key === todayKey || data.daysOff[key] || isWeekend(key)) return sum
+    const sessions = data.days[key] || []
+    return sum + toDecimalHours(sumSessionsMs(sessions))
+  }, 0)
+
   return {
     isCheckedIn,
     checkIn,
@@ -131,6 +147,8 @@ export function useTimeTracker() {
     daysOff: data.daysOff,
     toggleDayOff,
     isTodayOff,
-    setMilestoneCallback
+    setMilestoneCallback,
+    weekTarget,
+    weekTotalOtherDays,
   }
 }

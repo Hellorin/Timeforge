@@ -18,8 +18,9 @@ function getWeekLabel(weekKey) {
 }
 
 function HistoryDay({ day, todayKey, hoursFormat }) {
-  const [expanded, setExpanded] = useState(false)
   const isToday = day.date === todayKey
+  const [expanded, setExpanded] = useState(isToday)
+  const hasActiveSession = day.sessions.some(s => s.checkOut === null)
 
   return (
     <li className="history-day">
@@ -30,6 +31,7 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
       >
         <span className="history-date">
           {isToday ? 'Today' : formatDateKey(day.date)}
+          {hasActiveSession && <span className="session-live-dot" aria-label="session in progress" />}
         </span>
         <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(day.totalMs) : day.totalDecimal}h</span>
         <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
@@ -38,7 +40,7 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
       {expanded && (
         <ul className="history-sessions">
           {day.sessions.map((session, i) => (
-            <li key={i} className="history-session">
+            <li key={i} className={`history-session${session.checkOut === null ? ' history-session--active' : ''}`}>
               <span>{formatTime(session.checkIn)}</span>
               <span className="session-arrow">→</span>
               <span>{session.checkOut ? formatTime(session.checkOut) : '...'}</span>
@@ -82,7 +84,7 @@ export default function HistoryList({ allDays, todayKey, hoursFormat }) {
   const currentMonthPrefix = todayKey.slice(0, 7)
   const currentWeekKey = getWeekKey(todayKey)
 
-  const historyDays = allDays.filter(d => d.date !== todayKey && d.date.startsWith(currentMonthPrefix) && !d.isOff)
+  const historyDays = allDays.filter(d => d.date.startsWith(currentMonthPrefix) && !d.isOff)
 
   const weekGroups = useMemo(() => {
     const groups = new Map()

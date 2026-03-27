@@ -10,7 +10,7 @@ import CelebrationOverlay from './components/CelebrationOverlay'
 import { formatDateKey, isWeekend } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback, weekTarget, weekTotalOtherDays } = useTimeTracker()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
@@ -56,7 +56,7 @@ export default function App() {
               isTodayOff={isTodayOff}
             />
             <LiveTimer isCheckedIn={isCheckedIn} todaySessions={todaySessions} />
-            <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} isTodayOff={isTodayOff} />
+            <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} isTodayOff={isTodayOff} weekTarget={weekTarget} weekTotalOtherDays={weekTotalOtherDays} />
             <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} />
           </>
         ) : (
