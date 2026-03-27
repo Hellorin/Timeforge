@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { sumSessionsMs, toDecimalHours, toHoursMinutes } from '../utils/time'
 
-function formatHoursLeft(decimalHours) {
-  const totalMinutes = Math.round(decimalHours * 60)
+function formatMsLeft(ms) {
+  const totalMinutes = Math.floor(ms / 60000)
   const h = Math.floor(totalMinutes / 60)
   const m = totalMinutes % 60
   if (h === 0) return `${m}m`
@@ -10,7 +10,7 @@ function formatHoursLeft(decimalHours) {
   return `${h}h ${m}m`
 }
 
-export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, weekTarget, weekTotalOtherDays }) {
+export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, weekTargetMs, weekTotalOtherDaysMs }) {
   const [now, setNow] = useState(Date.now())
 
   const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
@@ -23,7 +23,7 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   }, [isCheckedIn])
 
   const showDaily = !isTodayOff && todaySessions.length > 0
-  const showWeek = weekTarget > 0
+  const showWeek = weekTargetMs > 0
 
   if (!showDaily && !showWeek) return null
 
@@ -31,12 +31,12 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   const displayTotal = hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)
   const sessionCount = todaySessions.length
 
-  // Live week total = other days (static) + today's live contribution
-  const todayDecimal = isTodayOff ? 0 : toDecimalHours(totalMs)
-  const weekTotal = weekTotalOtherDays + todayDecimal
-  const weekRemaining = Math.max(0, weekTarget - weekTotal)
-  const weekDone = weekRemaining === 0
-  const weekPct = Math.min(100, weekTarget > 0 ? (weekTotal / weekTarget) * 100 : 0)
+  // Live week remaining: all in ms, truncated to the minute for display
+  const todayMs = isTodayOff ? 0 : totalMs
+  const weekTotalMs = weekTotalOtherDaysMs + todayMs
+  const weekRemainingMs = Math.max(0, weekTargetMs - weekTotalMs)
+  const weekDone = weekRemainingMs === 0
+  const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
 
   return (
     <div className="today-summary">
@@ -58,7 +58,7 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
             <span className="week-remaining__done">Week complete!</span>
           ) : (
             <span className="week-remaining__label">
-              <strong>{formatHoursLeft(weekRemaining)}</strong> left this week
+              <strong>{formatMsLeft(weekRemainingMs)}</strong> left this week
             </span>
           )}
           <div className="week-bar-track">

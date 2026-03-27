@@ -124,16 +124,16 @@ export function useTimeTracker() {
 
   const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
 
-  // Week progress (live portion from today is added in TodaySummary)
+  // Week progress — all in raw ms for minute-level precision (live today added in TodaySummary)
   const weekDays = getWeekDays()
   const weekdays = weekDays.slice(0, 5)
   const daysOffCount = weekdays.filter(d => data.daysOff[toKey(d)]).length
-  const weekTarget = (5 - daysOffCount) * 8
-  const weekTotalOtherDays = weekDays.reduce((sum, date) => {
+  const weekTargetMs = (5 - daysOffCount) * 8 * 3600000
+  const weekTotalOtherDaysMs = weekDays.reduce((sum, date) => {
     const key = toKey(date)
     if (key === todayKey || data.daysOff[key] || isWeekend(key)) return sum
     const sessions = data.days[key] || []
-    return sum + toDecimalHours(sumSessionsMs(sessions))
+    return sum + sumSessionsMs(sessions)
   }, 0)
 
   return {
@@ -148,7 +148,7 @@ export function useTimeTracker() {
     toggleDayOff,
     isTodayOff,
     setMilestoneCallback,
-    weekTarget,
-    weekTotalOtherDays,
+    weekTargetMs,
+    weekTotalOtherDaysMs,
   }
 }
