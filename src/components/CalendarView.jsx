@@ -103,15 +103,12 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
 
         {/* Day rows */}
         {rows.map((row, ri) => {
-          const weekTotal = row.reduce((sum, date) => {
-            const key = toDateKey(date)
-            return sum + (dayMap.get(key)?.totalDecimal ?? 0)
-          }, 0)
-          // Use raw ms for comparisons to avoid per-day decimal rounding skewing the total
+          // Use raw ms for both comparison and display to match the track page
           const weekTotalMs = row.reduce((sum, date) => {
             const key = toDateKey(date)
             return sum + (dayMap.get(key)?.totalMs ?? 0)
           }, 0)
+          const weekTotal = weekTotalMs / 3600000
           // row[0..4] = Mon–Fri; only weekdays count toward target
           const daysOffCount = row.slice(0, 5).filter(d => daysOff[toDateKey(d)]).length
           const weekTarget = (5 - daysOffCount) * 8
