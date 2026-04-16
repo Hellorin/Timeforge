@@ -81,10 +81,10 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded }) 
 }
 
 export default function HistoryList({ allDays, todayKey, hoursFormat }) {
-  const currentMonthPrefix = todayKey.slice(0, 7)
   const currentWeekKey = getWeekKey(todayKey)
+  const [currentYear, currentMonth] = todayKey.split('-').map(Number)
 
-  const historyDays = allDays.filter(d => d.date.startsWith(currentMonthPrefix) && !d.isOff)
+  const historyDays = allDays.filter(d => !d.isOff)
 
   const hasActiveSession = historyDays.some(d => d.sessions.some(s => s.checkOut === null))
   const [now, setNow] = useState(Date.now)
@@ -102,14 +102,27 @@ export default function HistoryList({ allDays, todayKey, hoursFormat }) {
   })
 
   const weekGroups = useMemo(() => {
+    // Collect week keys that contain at least one day in the current month
+    const currentMonthWeekKeys = new Set()
+    for (const day of historyDays) {
+      const [y, m] = day.date.split('-').map(Number)
+      if (y === currentYear && m === currentMonth) {
+        currentMonthWeekKeys.add(getWeekKey(day.date))
+      }
+    }
+
+    // Group days by week, but only for weeks that touch the current month.
+    // This includes days from the previous month that belong to a qualifying week.
     const groups = new Map()
     for (const day of liveDays) {
       const wk = getWeekKey(day.date)
-      if (!groups.has(wk)) groups.set(wk, [])
-      groups.get(wk).push(day)
+      if (currentMonthWeekKeys.has(wk)) {
+        if (!groups.has(wk)) groups.set(wk, [])
+        groups.get(wk).push(day)
+      }
     }
     return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [liveDays])
+  }, [historyDays, currentYear, currentMonth])
 
   if (weekGroups.length === 0) return null
 
