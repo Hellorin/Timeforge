@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { formatDateKey, formatTime, toHoursMinutes, toDecimalHours, getWeekDays } from '../utils/time'
+import { useState, useMemo, useEffect } from 'react'
+import { formatDateKey, formatTime, toHoursMinutes, toDecimalHours, getWeekDays, sumSessionsMs } from '../utils/time'
 
 function getWeekKey(dateKey) {
   const [y, m, d] = dateKey.split('-').map(Number)
@@ -86,15 +86,30 @@ export default function HistoryList({ allDays, todayKey, hoursFormat }) {
 
   const historyDays = allDays.filter(d => d.date.startsWith(currentMonthPrefix) && !d.isOff)
 
+  const hasActiveSession = historyDays.some(d => d.sessions.some(s => s.checkOut === null))
+  const [now, setNow] = useState(Date.now)
+
+  useEffect(() => {
+    if (!hasActiveSession) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [hasActiveSession])
+
+  const liveDays = historyDays.map(day => {
+    if (!day.sessions.some(s => s.checkOut === null)) return day
+    const totalMs = sumSessionsMs(day.sessions, now)
+    return { ...day, totalMs, totalDecimal: toDecimalHours(totalMs) }
+  })
+
   const weekGroups = useMemo(() => {
     const groups = new Map()
-    for (const day of historyDays) {
+    for (const day of liveDays) {
       const wk = getWeekKey(day.date)
       if (!groups.has(wk)) groups.set(wk, [])
       groups.get(wk).push(day)
     }
     return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [historyDays])
+  }, [liveDays])
 
   if (weekGroups.length === 0) return null
 
