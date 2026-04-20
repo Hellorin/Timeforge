@@ -1,11 +1,12 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { decimalToHoursMinutes } from '../../utils/time'
 
 export default function YearOverYearChart({ data, currentYear, prevYear }) {
   return (
     <div className="stats-chart">
       <h3 className="stats-chart__title">Year over year</h3>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
           <XAxis
             dataKey="month"
             tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
@@ -17,7 +18,8 @@ export default function YearOverYearChart({ data, currentYear, prevYear }) {
             tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={36}
+            width={52}
+            tickFormatter={decimalToHoursMinutes}
           />
           <Tooltip
             cursor={{ fill: 'rgba(128,128,128,0.08)' }}
@@ -27,7 +29,7 @@ export default function YearOverYearChart({ data, currentYear, prevYear }) {
               borderRadius: 6,
               fontSize: 12,
             }}
-            formatter={(v) => `${v}h`}
+            formatter={(v) => decimalToHoursMinutes(v)}
           />
           <Legend
             wrapperStyle={{ fontSize: 11, color: 'var(--text-muted)' }}
