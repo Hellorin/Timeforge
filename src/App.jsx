@@ -7,10 +7,11 @@ import HistoryList from './components/HistoryList'
 import CalendarView from './components/CalendarView'
 import DayEditModal from './components/DayEditModal'
 import CelebrationOverlay from './components/CelebrationOverlay'
+import GlobalStatsPage from './components/GlobalStatsPage'
 import { formatDateKey, isWeekend } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
@@ -46,7 +47,7 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        {view === 'tracker' ? (
+        {view === 'tracker' && (
           <>
             <SlideToggle
               isCheckedIn={isCheckedIn}
@@ -59,13 +60,15 @@ export default function App() {
             <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} isTodayOff={isTodayOff} weekTargetMs={weekTargetMs} weekTotalOtherDaysMs={weekTotalOtherDaysMs} />
             <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} daysOff={daysOff} />
           </>
-        ) : (
+        )}
+        {view === 'calendar' && (
           <CalendarView
             allDays={allDays}
             daysOff={daysOff}
             onDayClick={(key, dayData) => setSelectedDay({ dateKey: key, sessions: dayData?.sessions ?? [] })}
           />
         )}
+        {view === 'stats' && <GlobalStatsPage stats={stats} />}
       </main>
 
       {selectedDay && (
@@ -93,6 +96,13 @@ export default function App() {
         >
           <span className="tab-icon">📅</span>
           <span className="tab-label">Calendar</span>
+        </button>
+        <button
+          className={`tab-btn${view === 'stats' ? ' tab-btn--active' : ''}`}
+          onClick={() => setView('stats')}
+        >
+          <span className="tab-icon">📊</span>
+          <span className="tab-label">Stats</span>
         </button>
       </nav>
     </div>
