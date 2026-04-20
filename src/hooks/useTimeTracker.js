@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend, getWeekDays, computeWeekProgress } from '../utils/time'
+import { computeGlobalStats } from '../utils/stats'
 
 function toKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -122,6 +123,8 @@ export function useTimeTracker() {
 
   const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
 
+  const stats = useMemo(() => computeGlobalStats(data.days, data.daysOff), [data.days, data.daysOff])
+
   const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
 
   // Week progress — all in raw ms for minute-level precision (live today added in TodaySummary)
@@ -150,5 +153,6 @@ export function useTimeTracker() {
     setMilestoneCallback,
     weekTargetMs,
     weekTotalOtherDaysMs,
+    stats,
   }
 }
