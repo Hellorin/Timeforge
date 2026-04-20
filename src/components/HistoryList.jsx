@@ -1,11 +1,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { formatDateKey, formatTime, toHoursMinutes, toDecimalHours, getWeekDays, sumSessionsMs } from '../utils/time'
 
+function toDateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 function getWeekKey(dateKey) {
   const [y, m, d] = dateKey.split('-').map(Number)
   const weekDays = getWeekDays(new Date(y, m - 1, d))
-  const mon = weekDays[0]
-  return `${mon.getFullYear()}-${String(mon.getMonth() + 1).padStart(2, '0')}-${String(mon.getDate()).padStart(2, '0')}`
+  return toDateKey(weekDays[0])
 }
 
 function getWeekLabel(weekKey) {
@@ -52,19 +55,38 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
   )
 }
 
-function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded }) {
+function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, daysOff, isCurrentWeek }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const totalMs = days.reduce((sum, d) => sum + d.totalMs, 0)
   const label = getWeekLabel(weekKey)
 
+  const [y, m, d] = weekKey.split('-').map(Number)
+  const weekdays = getWeekDays(new Date(y, m - 1, d)).slice(0, 5)
+  const daysOffCount = weekdays.filter(date => daysOff[toDateKey(date)]).length
+  const weekTargetMs = (5 - daysOffCount) * 8 * 3600000
+
+  let status = 'pending'
+  if (weekTargetMs > 0) {
+    if (totalMs >= weekTargetMs) status = 'success'
+    else if (!isCurrentWeek) status = 'fail'
+  }
+
   return (
-    <li className="history-week">
+    <li className={`history-week history-week--${status}`}>
       <button
         className="history-week-header"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
       >
         <span className="history-week-label">{label}</span>
+        {status !== 'pending' && (
+          <span
+            className={`history-week-status history-week-status--${status}`}
+            aria-label={status === 'success' ? 'Weekly target met' : 'Weekly target not met'}
+          >
+            {status === 'success' ? '✓' : '✗'}
+          </span>
+        )}
         <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)}h</span>
         <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
       </button>
@@ -80,7 +102,7 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded }) 
   )
 }
 
-export default function HistoryList({ allDays, todayKey, hoursFormat }) {
+export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = {} }) {
   const currentWeekKey = getWeekKey(todayKey)
   const [currentYear, currentMonth] = todayKey.split('-').map(Number)
 
@@ -138,6 +160,8 @@ export default function HistoryList({ allDays, todayKey, hoursFormat }) {
             todayKey={todayKey}
             hoursFormat={hoursFormat}
             defaultExpanded={weekKey === currentWeekKey}
+            daysOff={daysOff}
+            isCurrentWeek={weekKey === currentWeekKey}
           />
         ))}
       </ul>

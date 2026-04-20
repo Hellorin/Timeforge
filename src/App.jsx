@@ -57,7 +57,7 @@ export default function App() {
             />
             <LiveTimer isCheckedIn={isCheckedIn} todaySessions={todaySessions} />
             <TodaySummary todaySessions={todaySessions} hoursFormat={hoursFormat} onToggleFormat={toggleHoursFormat} isTodayOff={isTodayOff} weekTargetMs={weekTargetMs} weekTotalOtherDaysMs={weekTotalOtherDaysMs} />
-            <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} />
+            <HistoryList allDays={allDays} todayKey={todayKey} hoursFormat={hoursFormat} daysOff={daysOff} />
           </>
         ) : (
           <CalendarView
