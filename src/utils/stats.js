@@ -1,7 +1,6 @@
 import { sumSessionsMs, toDecimalHours, isWeekend } from './time'
 
 const MS_PER_HOUR = 3600000
-const MS_PER_DAY = 86400000
 const DAY_TARGET_HOURS = 8
 
 function parseKey(key) {
@@ -67,81 +66,26 @@ export function computeGlobalStats(days, daysOff) {
       totalMs: sumSessionsMs(sessions, now),
     }))
 
-  const totals = computeTotals(entries, perDay, daysOff)
+  const totals = computeTotals(perDay)
   const streaks = computeStreaks(perDay, daysOff)
-  const averages = computeAverages(perDay, days, daysOff)
+  const averages = computeAverages(perDay)
   const charts = computeCharts(perDay)
 
   return { isEmpty: false, totals, averages, streaks, charts }
 }
 
-function computeTotals(entries, perDay, daysOff) {
+function computeTotals(perDay) {
   const totalMs = perDay.reduce((sum, d) => sum + d.totalMs, 0)
-  const totalSessions = perDay.reduce((sum, d) => sum + d.sessions.length, 0)
-  const workdaysLogged = perDay.length
-  const daysOffTaken = Object.keys(daysOff).filter(k => !isWeekend(k)).length
-  const firstKey = entries[0][0]
-  const firstDate = parseKey(firstKey)
-  const daysSinceStart = Math.max(1, Math.floor((Date.now() - firstDate.getTime()) / MS_PER_DAY) + 1)
-
   return {
     totalHours: toDecimalHours(totalMs),
-    totalSessions,
-    workdaysLogged,
-    daysOffTaken,
-    firstTrackedKey: firstKey,
-    daysSinceStart,
+    workdaysLogged: perDay.length,
   }
 }
 
-function computeAverages(perDay, days, daysOff) {
+function computeAverages(perDay) {
   const totalMs = perDay.reduce((sum, d) => sum + d.totalMs, 0)
-  const totalSessions = perDay.reduce((sum, d) => sum + d.sessions.length, 0)
   const avgHoursPerWorkday = perDay.length > 0 ? toDecimalHours(totalMs / perDay.length) : 0
-  const avgSessionsPerWorkday = perDay.length > 0
-    ? Math.round((totalSessions / perDay.length) * 10) / 10
-    : 0
-
-  // Average check-in (first session of day) and check-out (last session of day).
-  // Uses minutes-from-midnight so crossings of midnight stay well-defined (they don't
-  // happen in this single-user app).
-  let checkInSum = 0
-  let checkOutSum = 0
-  let checkInCount = 0
-  let checkOutCount = 0
-  for (const d of perDay) {
-    const first = d.sessions[0]
-    const last = d.sessions[d.sessions.length - 1]
-    if (first?.checkIn) {
-      const dt = new Date(first.checkIn)
-      checkInSum += dt.getHours() * 60 + dt.getMinutes()
-      checkInCount++
-    }
-    if (last?.checkOut) {
-      const dt = new Date(last.checkOut)
-      checkOutSum += dt.getHours() * 60 + dt.getMinutes()
-      checkOutCount++
-    }
-  }
-  const typicalCheckIn = checkInCount > 0 ? minutesToHHMM(checkInSum / checkInCount) : null
-  const typicalCheckOut = checkOutCount > 0 ? minutesToHHMM(checkOutSum / checkOutCount) : null
-
-  // Average hours per *completed* week (weeks fully in the past, not today's week).
-  const currentMonday = mondayOf(new Date())
-  const weekTotals = buildWeeklyTotals(days, daysOff)
-  const completedWeeks = weekTotals.filter(w => w.mondayDate.getTime() < currentMonday.getTime())
-  const completedWeekTotal = completedWeeks.reduce((sum, w) => sum + w.hours, 0)
-  const avgHoursPerWeek = completedWeeks.length > 0
-    ? Math.round((completedWeekTotal / completedWeeks.length) * 10) / 10
-    : 0
-
-  return {
-    avgHoursPerWorkday,
-    avgHoursPerWeek,
-    avgSessionsPerWorkday,
-    typicalCheckIn,
-    typicalCheckOut,
-  }
+  return { avgHoursPerWorkday }
 }
 
 function computeStreaks(perDay, daysOff) {
@@ -172,46 +116,9 @@ function computeStreaks(perDay, daysOff) {
     if (currentStreak > 10000) break
   }
 
-  // Longest streak: iterate all workdays from the first logged date to today.
-  const sortedKeys = perDay.map(d => d.key).sort()
-  let longestStreak = 0
-  if (sortedKeys.length > 0) {
-    let start = parseKey(sortedKeys[0])
-    start.setHours(0, 0, 0, 0)
-    const end = new Date()
-    end.setHours(0, 0, 0, 0)
-    let run = 0
-    for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
-      const key = toKey(d)
-      if (isDayOff(key, daysOff)) continue
-      if (loggedKeys.has(key)) {
-        run++
-        if (run > longestStreak) longestStreak = run
-      } else {
-        run = 0
-      }
-    }
-  }
-
-  // Longest single session and longest single day.
-  let longestSessionMs = 0
-  let longestDayMs = 0
-  let longestDayKey = null
-  for (const d of perDay) {
-    if (d.totalMs > longestDayMs) {
-      longestDayMs = d.totalMs
-      longestDayKey = d.key
-    }
-    for (const s of d.sessions) {
-      if (!s.checkIn || !s.checkOut) continue
-      const ms = new Date(s.checkOut).getTime() - new Date(s.checkIn).getTime()
-      if (ms > longestSessionMs) longestSessionMs = ms
-    }
-  }
-
   // Weeks hit target: count completed weeks whose weekday total met the (prorated-for-daysOff) 40h goal.
   const currentMonday = mondayOf(new Date())
-  const weekTotals = buildWeeklyTotals(null, daysOff, perDay)
+  const weekTotals = buildWeeklyTotals(perDay, daysOff)
   const completedWeeks = weekTotals.filter(w => w.mondayDate.getTime() < currentMonday.getTime())
   const weeksHit = completedWeeks.filter(w => w.target > 0 && w.hours >= w.target).length
   const weeksHitPct = completedWeeks.length > 0
@@ -220,10 +127,6 @@ function computeStreaks(perDay, daysOff) {
 
   return {
     currentStreak,
-    longestStreak,
-    longestSessionHours: toDecimalHours(longestSessionMs),
-    longestDayHours: toDecimalHours(longestDayMs),
-    longestDayKey,
     weeksHit,
     completedWeeks: completedWeeks.length,
     weeksHitPct,
@@ -231,34 +134,13 @@ function computeStreaks(perDay, daysOff) {
 }
 
 function computeCharts(perDay) {
-  // Day-of-week totals (Mon–Fri). Index 0 = Monday … 4 = Friday.
-  const dowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-  const dowMs = [0, 0, 0, 0, 0]
-  const dowCount = [0, 0, 0, 0, 0]
-  for (const d of perDay) {
-    const date = parseKey(d.key)
-    const dow = date.getDay() // 0=Sun..6=Sat
-    if (dow === 0 || dow === 6) continue
-    const idx = dow - 1
-    dowMs[idx] += d.totalMs
-    dowCount[idx]++
-  }
-  const dayOfWeek = dowLabels.map((label, i) => ({
-    day: label,
-    hours: toDecimalHours(dowMs[i]),
-    avgHours: dowCount[i] > 0 ? toDecimalHours(dowMs[i] / dowCount[i]) : 0,
-  }))
-
   // Monthly totals — last 12 months ending with the current month.
   const monthly = buildMonthlyTotals(perDay, 12)
-
-  // Year-over-year — current year vs. previous year, one entry per month.
-  const yearOverYear = buildYearOverYear(perDay)
 
   // Activity heatmap — last 52 weeks × 7 days, anchored to the current week.
   const heatmap = buildHeatmap(perDay)
 
-  return { dayOfWeek, monthly, yearOverYear, heatmap }
+  return { monthly, heatmap }
 }
 
 function buildMonthlyTotals(perDay, months) {
@@ -284,30 +166,6 @@ function buildMonthlyTotals(perDay, months) {
       hours: toDecimalHours(ms),
     }
   })
-}
-
-function buildYearOverYear(perDay) {
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const prevYear = currentYear - 1
-  const hasPrev = perDay.some(d => parseKey(d.key).getFullYear() === prevYear)
-  if (!hasPrev) return null
-
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const curr = new Array(12).fill(0)
-  const prev = new Array(12).fill(0)
-  for (const d of perDay) {
-    const date = parseKey(d.key)
-    const year = date.getFullYear()
-    const m = date.getMonth()
-    if (year === currentYear) curr[m] += d.totalMs
-    else if (year === prevYear) prev[m] += d.totalMs
-  }
-  return monthNames.map((m, i) => ({
-    month: m,
-    [String(currentYear)]: toDecimalHours(curr[i]),
-    [String(prevYear)]: toDecimalHours(prev[i]),
-  }))
 }
 
 function buildHeatmap(perDay) {
@@ -340,21 +198,14 @@ function bucketForHours(h) {
   return 4
 }
 
-function buildWeeklyTotals(daysMap, daysOff, perDay = null) {
-  // Build { mondayDate, mondayKey, hours, target } for every week spanned by data.
-  const source = perDay
-    ? perDay
-    : Object.entries(daysMap || {})
-        .filter(([key, sessions]) => sessions && sessions.length > 0 && !isDayOff(key, daysOff))
-        .map(([key, sessions]) => ({ key, sessions, totalMs: sumSessionsMs(sessions) }))
+function buildWeeklyTotals(perDay, daysOff) {
+  if (perDay.length === 0) return []
 
-  if (source.length === 0) return []
-
-  const keys = source.map(d => d.key).sort()
+  const keys = perDay.map(d => d.key).sort()
   const firstMonday = mondayOf(parseKey(keys[0]))
   const lastMonday = mondayOf(parseKey(keys[keys.length - 1]))
 
-  const byKey = new Map(source.map(d => [d.key, d.totalMs]))
+  const byKey = new Map(perDay.map(d => [d.key, d.totalMs]))
   const weeks = []
   for (let m = new Date(firstMonday); m <= lastMonday; m = addDays(m, 7)) {
     let ms = 0
@@ -377,11 +228,4 @@ function buildWeeklyTotals(daysMap, daysOff, perDay = null) {
 
 function monthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
-
-function minutesToHHMM(minutes) {
-  const total = Math.round(minutes)
-  const h = Math.floor(total / 60)
-  const m = total % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
