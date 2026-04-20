@@ -3,7 +3,7 @@ import DayOfWeekChart from './stats/DayOfWeekChart'
 import MonthlyTotalsChart from './stats/MonthlyTotalsChart'
 import YearOverYearChart from './stats/YearOverYearChart'
 import ActivityHeatmap from './stats/ActivityHeatmap'
-import { formatDateKey } from '../utils/time'
+import { formatDateKey, decimalToHoursMinutes } from '../utils/time'
 
 export default function GlobalStatsPage({ stats }) {
   if (!stats || stats.isEmpty) {
@@ -26,7 +26,7 @@ export default function GlobalStatsPage({ stats }) {
     <section className="stats-page">
       <Section title="Lifetime totals">
         <div className="stats-grid">
-          <StatCard label="Hours tracked" value={totals.totalHours} unit="h" />
+          <StatCard label="Hours tracked" value={decimalToHoursMinutes(totals.totalHours)} />
           <StatCard label="Sessions" value={totals.totalSessions} />
           <StatCard label="Workdays" value={totals.workdaysLogged} />
           <StatCard label="Days off" value={totals.daysOffTaken} />
@@ -40,8 +40,8 @@ export default function GlobalStatsPage({ stats }) {
 
       <Section title="Averages">
         <div className="stats-grid">
-          <StatCard label="Per workday" value={averages.avgHoursPerWorkday} unit="h" />
-          <StatCard label="Per week" value={averages.avgHoursPerWeek} unit="h" hint="completed weeks" />
+          <StatCard label="Per workday" value={decimalToHoursMinutes(averages.avgHoursPerWorkday)} />
+          <StatCard label="Per week" value={decimalToHoursMinutes(averages.avgHoursPerWeek)} hint="completed weeks" />
           <StatCard label="Sessions / day" value={averages.avgSessionsPerWorkday} />
           <StatCard
             label="Typical hours"
@@ -61,8 +61,8 @@ export default function GlobalStatsPage({ stats }) {
             value={streaks.completedWeeks > 0 ? `${streaks.weeksHit}/${streaks.completedWeeks}` : '—'}
             hint={streaks.completedWeeks > 0 ? `${streaks.weeksHitPct}%` : undefined}
           />
-          <StatCard label="Longest day" value={streaks.longestDayHours} unit="h" />
-          <StatCard label="Longest session" value={streaks.longestSessionHours} unit="h" />
+          <StatCard label="Longest day" value={decimalToHoursMinutes(streaks.longestDayHours)} />
+          <StatCard label="Longest session" value={decimalToHoursMinutes(streaks.longestSessionHours)} />
         </div>
         <p className="stats-footnote">The current in-progress week is excluded from goal counts.</p>
       </Section>

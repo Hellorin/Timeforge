@@ -43,6 +43,13 @@ export function toHoursMinutes(ms) {
 }
 
 /**
+ * Converts decimal hours (e.g. 8.25) to "H:MM" (e.g. "8:15").
+ */
+export function decimalToHoursMinutes(decimalHours) {
+  return toHoursMinutes(decimalHours * 3600000)
+}
+
+/**
  * Formats milliseconds as HH:MM:SS for the live timer.
  */
 export function formatDuration(ms) {

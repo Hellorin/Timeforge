@@ -1,3 +1,5 @@
+import { decimalToHoursMinutes } from '../../utils/time'
+
 const CELL = 10
 const GAP = 2
 const ROWS = 7
@@ -30,7 +32,7 @@ export default function ActivityHeatmap({ weeks }) {
                 ry={2}
                 className={`stats-heatmap__cell stats-heatmap__cell--b${day.bucket}`}
               >
-                <title>{`${day.key}: ${day.hours}h`}</title>
+                <title>{`${day.key}: ${decimalToHoursMinutes(day.hours)}`}</title>
               </rect>
             ))
           )}
