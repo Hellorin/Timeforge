@@ -57,14 +57,14 @@ export default function GlobalStatsPage({ stats }) {
           <StatCard label="Current streak" value={streaks.currentStreak} unit="d" />
           <StatCard label="Longest streak" value={streaks.longestStreak} unit="d" />
           <StatCard
-            label="Weeks hit 40h"
+            label="Weeks on target"
             value={streaks.completedWeeks > 0 ? `${streaks.weeksHit}/${streaks.completedWeeks}` : '—'}
             hint={streaks.completedWeeks > 0 ? `${streaks.weeksHitPct}%` : undefined}
           />
           <StatCard label="Longest day" value={decimalToHoursMinutes(streaks.longestDayHours)} />
           <StatCard label="Longest session" value={decimalToHoursMinutes(streaks.longestSessionHours)} />
         </div>
-        <p className="stats-footnote">The current in-progress week is excluded from goal counts.</p>
+        <p className="stats-footnote">Weekly target is 8h per workday, reduced for days off. The current in-progress week is excluded from goal counts.</p>
       </Section>
 
       <Section title="Patterns">
