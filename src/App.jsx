@@ -87,7 +87,7 @@ export default function App() {
           className={`tab-btn${view === 'tracker' ? ' tab-btn--active' : ''}`}
           onClick={() => setView('tracker')}
         >
-          <span className="tab-icon">⏱</span>
+          <span className="tab-icon">⏱️</span>
           <span className="tab-label">Track</span>
         </button>
         <button
