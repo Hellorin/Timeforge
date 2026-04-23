@@ -7,13 +7,47 @@ function toKey(date) {
 }
 
 const STORAGE_KEY = 'timeforge'
+const AUTO_CHECKOUT_HOUR = 21
+
+// Auto close any open session whose check-in was on a past calendar day —
+// we assume the user forgot to check out. Cap the checkout at 21:00 of the
+// check-in day (or the check-in time itself if it was already later).
+function autoCloseStaleSessions(data) {
+  const todayKey = getTodayKey()
+  let nextDays = null
+
+  for (const dateKey of Object.keys(data.days)) {
+    if (dateKey >= todayKey) continue
+    const sessions = data.days[dateKey]
+    const last = sessions[sessions.length - 1]
+    if (!last || last.checkOut !== null) continue
+
+    const [y, m, d] = dateKey.split('-').map(Number)
+    const cutoff = new Date(y, m - 1, d, AUTO_CHECKOUT_HOUR, 0, 0, 0).getTime()
+    const checkInMs = new Date(last.checkIn).getTime()
+    const checkOutMs = Math.max(checkInMs, cutoff)
+
+    if (!nextDays) nextDays = { ...data.days }
+    const updated = sessions.slice()
+    updated[updated.length - 1] = {
+      ...last,
+      checkOut: new Date(checkOutMs).toISOString(),
+      autoCheckedOut: true,
+    }
+    nextDays[dateKey] = updated
+  }
+
+  return nextDays ? { ...data, days: nextDays } : data
+}
 
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     const parsed = raw ? JSON.parse(raw) : { days: {}, daysOff: {} }
     if (!parsed.daysOff) parsed.daysOff = {}
-    return parsed
+    const fixed = autoCloseStaleSessions(parsed)
+    if (fixed !== parsed) saveData(fixed)
+    return fixed
   } catch {
     return { days: {}, daysOff: {} }
   }
@@ -90,7 +124,8 @@ export function useTimeTracker() {
     .map(([date, sessions]) => {
       const isOff = !!(data.daysOff[date] || isWeekend(date))
       const totalMs = isOff ? 0 : sumSessionsMs(sessions)
-      return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs), isOff }
+      const autoCheckedOut = sessions.some(s => s.autoCheckedOut)
+      return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs), isOff, autoCheckedOut }
     })
     .sort((a, b) => b.date.localeCompare(a.date))
 

@@ -503,6 +503,30 @@ body {
   color: var(--text);
 }
 
+.auto-checkout-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b45309;
+  background: color-mix(in srgb, transparent, #fbbf24 30%);
+  border: 1px solid color-mix(in srgb, transparent, #fbbf24 60%);
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.session-auto-flag {
+  color: #b45309;
+  margin-left: 0.25rem;
+}
+
+.history-session--auto {
+  color: color-mix(in srgb, var(--text), #b45309 25%);
+}
+
 /* ─── Tab Bar ───────────────────────────────────────────────────────────── */
 .tab-bar {
   position: fixed;
@@ -675,6 +699,19 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
+}
+
+.cal-day-warn {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.7rem;
+  color: #b45309;
+  line-height: 1;
+}
+
+.cal-day--auto-checkout {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, transparent, #fbbf24 55%);
 }
 
 .cal-day-tooltip {
