@@ -139,11 +139,14 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                 const isDayOff = !!daysOff[key] || isWeekend(key)
                 const hasSessions = !isDayOff && dayData && dayData.sessions.length > 0
 
+                const autoCheckedOut = !isDayOff && !!dayData?.autoCheckedOut
+
                 let cls = 'cal-day'
                 if (!isCurrentMonth) cls += ' cal-day--other-month'
                 if (isToday) cls += ' cal-day--today'
                 if (hasSessions) cls += ' cal-day--has-sessions'
                 if (isDayOff) cls += ' cal-day--day-off'
+                if (autoCheckedOut) cls += ' cal-day--auto-checkout'
 
                 return (
                   <div
@@ -156,6 +159,13 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                     <span className="cal-day-num">{date.getDate()}</span>
                     {isDayOff && <span className="cal-day-off-badge">off</span>}
                     {!isDayOff && hasSessions && <span className="cal-day-dot" />}
+                    {autoCheckedOut && (
+                      <span
+                        className="cal-day-warn"
+                        aria-label="Auto-checked-out — verify hours"
+                        title="Auto-checked-out at 21:00"
+                      >⚠</span>
+                    )}
                     {hasSessions && hoveredDay === key && (
                       <div className="cal-day-tooltip">
                         <strong>{dayData.totalDecimal.toFixed(1)}h</strong>

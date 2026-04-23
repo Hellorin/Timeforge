@@ -35,6 +35,15 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
         <span className="history-date">
           {isToday ? 'Today' : formatDateKey(day.date)}
           {hasActiveSession && <span className="session-live-dot" aria-label="session in progress" />}
+          {day.autoCheckedOut && (
+            <span
+              className="auto-checkout-badge"
+              title="You likely forgot to check out — auto-closed at 21:00"
+              aria-label="Auto-checked-out at 21:00; verify the hours are correct"
+            >
+              ⚠ auto
+            </span>
+          )}
         </span>
         <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(day.totalMs) : day.totalDecimal}h</span>
         <span className="history-chevron">{expanded ? '▲' : '▼'}</span>
@@ -43,10 +52,13 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
       {expanded && (
         <ul className="history-sessions">
           {day.sessions.map((session, i) => (
-            <li key={i} className={`history-session${session.checkOut === null ? ' history-session--active' : ''}`}>
+            <li key={i} className={`history-session${session.checkOut === null ? ' history-session--active' : ''}${session.autoCheckedOut ? ' history-session--auto' : ''}`}>
               <span>{formatTime(session.checkIn)}</span>
               <span className="session-arrow">→</span>
-              <span>{session.checkOut ? formatTime(session.checkOut) : '...'}</span>
+              <span>
+                {session.checkOut ? formatTime(session.checkOut) : '...'}
+                {session.autoCheckedOut && <span className="session-auto-flag" title="Auto-checked-out at 21:00"> ⚠</span>}
+              </span>
             </li>
           ))}
         </ul>
