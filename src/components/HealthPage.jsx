@@ -77,15 +77,15 @@ export default function HealthPage({ stats, allDays, daysOff }) {
         <ul className="health-guide__list">
           <li className="health-guide__item health-guide__item--ok">
             <span className="health-guide__dot" />
-            <span><strong>On track</strong> — 40–45 h/week (target zone)</span>
+            <span><strong>On track</strong> — 100–112% of your weekly target (e.g. 40–45 h on a full week)</span>
           </li>
           <li className="health-guide__item health-guide__item--warn">
             <span className="health-guide__dot" />
-            <span><strong>Under</strong> — below 40 h/week. Could signal a risk.</span>
+            <span><strong>Under</strong> — below your weekly target. Could signal a risk.</span>
           </li>
           <li className="health-guide__item health-guide__item--danger">
             <span className="health-guide__dot" />
-            <span><strong>Over</strong> — above 45 h/week. Sustained overtime can hurt.</span>
+            <span><strong>Over</strong> — more than 112% of your target. Sustained overtime can hurt.</span>
           </li>
         </ul>
       </div>

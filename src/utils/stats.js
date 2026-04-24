@@ -241,7 +241,7 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
     .filter(([, sessions]) => sessions && sessions.length > 0)
 
   if (entries.length === 0) {
-    return { recentAvgHours: 0, weekCount: 0, currentWeekHours: 0, currentWeekTarget: 0, status: 'empty' }
+    return { recentAvgHours: 0, recentAvgTarget: 0, weekCount: 0, currentWeekHours: 0, currentWeekTarget: 0, status: 'empty' }
   }
 
   const perDay = entries
@@ -261,22 +261,32 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   const recent = completedWeeks.slice(-weeksBack)
 
   let recentAvgHours
+  let recentAvgTarget
   let weekCount
   if (recent.length > 0) {
     recentAvgHours = recent.reduce((sum, w) => sum + w.hours, 0) / recent.length
+    // Average the prorated targets so days-off weeks don't distort the comparison
+    recentAvgTarget = recent.reduce((sum, w) => sum + w.target, 0) / recent.length
     weekCount = recent.length
   } else {
-    // Fallback: extrapolate from daily average
+    // Fallback: extrapolate from daily average against standard 5-day target
     const totalMs = perDay.reduce((sum, d) => sum + d.totalMs, 0)
     const avgDay = perDay.length > 0 ? toDecimalHours(totalMs / perDay.length) : 0
     recentAvgHours = avgDay * 5
+    recentAvgTarget = DAY_TARGET_HOURS * 5
     weekCount = 0
   }
 
+  // Thresholds relative to the (prorated) target:
+  //   ok        = 100–112.5% of target  (≈ 40–45 h on a standard week)
+  //   too-much  = above 112.5%
+  //   not-enough = below 100%
+  const UPPER_RATIO = 45 / 40 // 1.125
   let status
-  if (recentAvgHours > 45) status = 'too-much'
-  else if (recentAvgHours >= 40) status = 'ok'
+  if (recentAvgTarget === 0) status = 'not-enough'
+  else if (recentAvgHours > recentAvgTarget * UPPER_RATIO) status = 'too-much'
+  else if (recentAvgHours >= recentAvgTarget) status = 'ok'
   else status = 'not-enough'
 
-  return { recentAvgHours, weekCount, currentWeekHours, currentWeekTarget, status }
+  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status }
 }
