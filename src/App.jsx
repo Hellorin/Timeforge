@@ -8,6 +8,7 @@ import CalendarView from './components/CalendarView'
 import DayEditModal from './components/DayEditModal'
 import CelebrationOverlay from './components/CelebrationOverlay'
 import GlobalStatsPage from './components/GlobalStatsPage'
+import HealthPage from './components/HealthPage'
 import { formatDateKey, isWeekend } from './utils/time'
 
 export default function App() {
@@ -68,6 +69,7 @@ export default function App() {
             onDayClick={(key, dayData) => setSelectedDay({ dateKey: key, sessions: dayData?.sessions ?? [] })}
           />
         )}
+        {view === 'health' && <HealthPage stats={stats} allDays={allDays} daysOff={daysOff} />}
         {view === 'stats' && <GlobalStatsPage stats={stats} />}
       </main>
 
@@ -96,6 +98,13 @@ export default function App() {
         >
           <span className="tab-icon">📅</span>
           <span className="tab-label">Calendar</span>
+        </button>
+        <button
+            className={`tab-btn${view === 'health' ? ' tab-btn--active' : ''}`}
+            onClick={() => setView('health')}
+        >
+          <span className="tab-icon">🫀</span>
+          <span className="tab-label">Health</span>
         </button>
         <button
           className={`tab-btn${view === 'stats' ? ' tab-btn--active' : ''}`}

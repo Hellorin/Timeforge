@@ -198,7 +198,7 @@ function bucketForHours(h) {
   return 4
 }
 
-function buildWeeklyTotals(perDay, daysOff) {
+export function buildWeeklyTotals(perDay, daysOff) {
   if (perDay.length === 0) return []
 
   const keys = perDay.map(d => d.key).sort()
@@ -228,4 +228,55 @@ function buildWeeklyTotals(perDay, daysOff) {
 
 function monthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * Returns health-relevant weekly stats for the HealthPage.
+ * Uses the last `weeksBack` completed weeks for the average; falls back to
+ * all-time daily average × 5 when not enough history exists.
+ */
+export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
+  const now = Date.now()
+  const entries = Object.entries(days)
+    .filter(([, sessions]) => sessions && sessions.length > 0)
+
+  if (entries.length === 0) {
+    return { recentAvgHours: 0, weekCount: 0, currentWeekHours: 0, currentWeekTarget: 0, status: 'empty' }
+  }
+
+  const perDay = entries
+    .filter(([key]) => !isDayOff(key, daysOff))
+    .map(([key, sessions]) => ({ key, sessions, totalMs: sumSessionsMs(sessions, now) }))
+
+  const currentMonday = mondayOf(new Date())
+  const allWeeks = buildWeeklyTotals(perDay, daysOff)
+
+  // Current week
+  const currentWeekData = allWeeks.find(w => w.mondayKey === toKey(currentMonday))
+  const currentWeekHours = currentWeekData?.hours ?? 0
+  const currentWeekTarget = currentWeekData?.target ?? DAY_TARGET_HOURS * 5
+
+  // Last N completed weeks
+  const completedWeeks = allWeeks.filter(w => w.mondayDate.getTime() < currentMonday.getTime())
+  const recent = completedWeeks.slice(-weeksBack)
+
+  let recentAvgHours
+  let weekCount
+  if (recent.length > 0) {
+    recentAvgHours = recent.reduce((sum, w) => sum + w.hours, 0) / recent.length
+    weekCount = recent.length
+  } else {
+    // Fallback: extrapolate from daily average
+    const totalMs = perDay.reduce((sum, d) => sum + d.totalMs, 0)
+    const avgDay = perDay.length > 0 ? toDecimalHours(totalMs / perDay.length) : 0
+    recentAvgHours = avgDay * 5
+    weekCount = 0
+  }
+
+  let status
+  if (recentAvgHours > 45) status = 'too-much'
+  else if (recentAvgHours >= 40) status = 'ok'
+  else status = 'not-enough'
+
+  return { recentAvgHours, weekCount, currentWeekHours, currentWeekTarget, status }
 }
