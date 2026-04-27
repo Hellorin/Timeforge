@@ -701,6 +701,17 @@ body {
   flex-shrink: 0;
 }
 
+.cal-day-off-badge--emoji {
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.cal-day--day-off .cal-day-off-badge--emoji {
+  opacity: 1;
+}
+
 .cal-day-warn {
   position: absolute;
   top: 2px;
