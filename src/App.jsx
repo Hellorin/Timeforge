@@ -8,7 +8,6 @@ import HistoryList from './components/HistoryList'
 import CalendarView from './components/CalendarView'
 import DayEditModal from './components/DayEditModal'
 import CelebrationOverlay from './components/CelebrationOverlay'
-import GlobalStatsPage from './components/GlobalStatsPage'
 import HealthPage from './components/HealthPage'
 import { formatDateKey } from './utils/time'
 
@@ -83,7 +82,6 @@ export default function App() {
             onSetEmploymentStartDate={setEmploymentStartDate}
           />
         )}
-        {view === 'stats' && <GlobalStatsPage stats={stats} />}
       </main>
 
       {selectedDay && (
@@ -118,13 +116,6 @@ export default function App() {
         >
           <span className="tab-icon">🫀</span>
           <span className="tab-label">Health</span>
-        </button>
-        <button
-          className={`tab-btn${view === 'stats' ? ' tab-btn--active' : ''}`}
-          onClick={() => setView('stats')}
-        >
-          <span className="tab-icon">📊</span>
-          <span className="tab-label">Stats</span>
         </button>
       </nav>
     </div>
