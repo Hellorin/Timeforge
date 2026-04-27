@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTimeTracker } from './hooks/useTimeTracker'
+import { useAppSettings } from './hooks/useAppSettings'
 import SlideToggle from './components/SlideToggle'
 import LiveTimer from './components/LiveTimer'
 import TodaySummary from './components/TodaySummary'
@@ -9,10 +10,11 @@ import DayEditModal from './components/DayEditModal'
 import CelebrationOverlay from './components/CelebrationOverlay'
 import GlobalStatsPage from './components/GlobalStatsPage'
 import HealthPage from './components/HealthPage'
-import { formatDateKey, isWeekend } from './utils/time'
+import { formatDateKey } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, toggleDayOff, isTodayOff, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, setDayOffType, isTodayOff, personalDaysUsedThisYear, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
+  const { settings, setAnnualHolidayAllowance } = useAppSettings()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
@@ -69,7 +71,16 @@ export default function App() {
             onDayClick={(key, dayData) => setSelectedDay({ dateKey: key, sessions: dayData?.sessions ?? [] })}
           />
         )}
-        {view === 'health' && <HealthPage stats={stats} allDays={allDays} daysOff={daysOff} />}
+        {view === 'health' && (
+          <HealthPage
+            stats={stats}
+            allDays={allDays}
+            daysOff={daysOff}
+            personalDaysUsedThisYear={personalDaysUsedThisYear}
+            annualHolidayAllowance={settings.annualHolidayAllowance}
+            onSetAnnualHolidayAllowance={setAnnualHolidayAllowance}
+          />
+        )}
         {view === 'stats' && <GlobalStatsPage stats={stats} />}
       </main>
 
@@ -79,8 +90,8 @@ export default function App() {
           sessions={selectedDay.sessions}
           onSave={(dateKey, sessions) => { setDaySessions(dateKey, sessions); setSelectedDay(null) }}
           onClose={() => setSelectedDay(null)}
-          isDayOff={(daysOff[selectedDay.dateKey] ?? false) || isWeekend(selectedDay.dateKey)}
-          onToggleDayOff={() => toggleDayOff(selectedDay.dateKey)}
+          dayOffType={daysOff[selectedDay.dateKey] ?? null}
+          onSetDayOffType={(type) => setDayOffType(selectedDay.dateKey, type)}
         />
       )}
 

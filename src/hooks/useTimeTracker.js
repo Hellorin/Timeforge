@@ -40,12 +40,30 @@ function autoCloseStaleSessions(data) {
   return nextDays ? { ...data, days: nextDays } : data
 }
 
+// Convert legacy `daysOff[key] = true` entries to the typed form
+// `daysOff[key] = "personal"`. Existing days off are conservatively assumed
+// to have consumed the user's holiday allowance.
+function migrateDaysOff(data) {
+  let changed = false
+  const next = {}
+  for (const [k, v] of Object.entries(data.daysOff)) {
+    if (v === true) {
+      next[k] = 'personal'
+      changed = true
+    } else if (v === 'personal' || v === 'official') {
+      next[k] = v
+    }
+  }
+  return changed ? { ...data, daysOff: next } : data
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     const parsed = raw ? JSON.parse(raw) : { days: {}, daysOff: {} }
     if (!parsed.daysOff) parsed.daysOff = {}
-    const fixed = autoCloseStaleSessions(parsed)
+    const migrated = migrateDaysOff(parsed)
+    const fixed = autoCloseStaleSessions(migrated)
     if (fixed !== parsed) saveData(fixed)
     return fixed
   } catch {
@@ -142,13 +160,16 @@ export function useTimeTracker() {
     })
   }, [])
 
-  const toggleDayOff = useCallback((dateKey) => {
+  // type: 'personal' | 'official' | null (null clears the day-off marker)
+  const setDayOffType = useCallback((dateKey, type) => {
     setData(prev => {
       const daysOff = { ...prev.daysOff }
-      if (daysOff[dateKey]) {
+      if (type === null) {
         delete daysOff[dateKey]
+      } else if (type === 'personal' || type === 'official') {
+        daysOff[dateKey] = type
       } else {
-        daysOff[dateKey] = true
+        return prev
       }
       const next = { ...prev, daysOff }
       saveData(next)
@@ -159,6 +180,15 @@ export function useTimeTracker() {
   const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
 
   const stats = useMemo(() => computeGlobalStats(data.days, data.daysOff), [data.days, data.daysOff])
+
+  const personalDaysUsedThisYear = useMemo(() => {
+    const prefix = `${new Date().getFullYear()}-`
+    let n = 0
+    for (const [k, v] of Object.entries(data.daysOff)) {
+      if (v === 'personal' && k.startsWith(prefix)) n++
+    }
+    return n
+  }, [data.daysOff])
 
   const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
 
@@ -183,8 +213,9 @@ export function useTimeTracker() {
     allDays,
     setDaySessions,
     daysOff: data.daysOff,
-    toggleDayOff,
+    setDayOffType,
     isTodayOff,
+    personalDaysUsedThisYear,
     setMilestoneCallback,
     weekTargetMs,
     weekTotalOtherDaysMs,
