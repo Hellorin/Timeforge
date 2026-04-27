@@ -10,10 +10,6 @@ function parseDateKey(str) {
   return date
 }
 
-function isLeapYear(year) {
-  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
-}
-
 export function computeProratedAllowance(startDateKey, annualAllowance, year = new Date().getFullYear()) {
   const allowance = Number(annualAllowance) || 0
   const start = parseDateKey(startDateKey)
@@ -25,11 +21,14 @@ export function computeProratedAllowance(startDateKey, annualAllowance, year = n
   if (start <= yearStart) return allowance
   if (start > yearEnd) return 0
 
-  const daysInYear = isLeapYear(year) ? 366 : 365
-  const msPerDay = 1000 * 60 * 60 * 24
-  const daysRemaining = Math.round((yearEnd - start) / msPerDay) + 1
+  const startMonth = start.getMonth()
+  const startDay = start.getDate()
+  const daysInStartMonth = new Date(year, startMonth + 1, 0).getDate()
+  const partialStartMonth = (daysInStartMonth - startDay + 1) / daysInStartMonth
+  const fullMonthsRemaining = 11 - startMonth
+  const monthsRemaining = partialStartMonth + fullMonthsRemaining
 
-  return (allowance * daysRemaining) / daysInYear
+  return (allowance * monthsRemaining) / 12
 }
 
 export function formatHolidayDays(n) {
