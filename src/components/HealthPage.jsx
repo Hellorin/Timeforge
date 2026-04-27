@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes } from '../utils/time'
 import { computeProratedAllowance, formatHolidayDays } from '../utils/holidays'
@@ -118,6 +118,7 @@ function HealthMetric({ label, value, sub }) {
 }
 
 function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onStartDateChange }) {
+  const [showSettings, setShowSettings] = useState(false)
   const year = new Date().getFullYear()
   const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
   const isProrated = startDate && proratedAllowance !== allowance
@@ -135,24 +136,10 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
       <div className="holiday-card__numbers">
         <span className="holiday-card__used">{used}</span>
         <span className="holiday-card__sep">/</span>
-        {isProrated ? (
-          <span className="holiday-card__allowance-wrap">
-            <span className="holiday-card__allowance-display">{formatHolidayDays(proratedAllowance)}</span>
-            <span className="holiday-card__allowance-suffix">days</span>
-          </span>
-        ) : (
-          <label className="holiday-card__allowance-wrap">
-            <input
-              type="number"
-              min="0"
-              className="holiday-card__allowance-input"
-              value={allowance}
-              onChange={e => onAllowanceChange(e.target.value)}
-              aria-label="Annual holiday allowance"
-            />
-            <span className="holiday-card__allowance-suffix">days</span>
-          </label>
-        )}
+        <span className="holiday-card__allowance-wrap">
+          <span className="holiday-card__allowance-display">{formatHolidayDays(proratedAllowance)}</span>
+          <span className="holiday-card__allowance-suffix">days</span>
+        </span>
       </div>
       <div className="holiday-card__bar-track">
         <div className="holiday-card__bar-fill" style={{ width: `${pct}%` }} />
@@ -162,37 +149,47 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
           ? `${formatHolidayDays(overBy)} day${overBy === 1 ? '' : 's'} over your allowance`
           : `${formatHolidayDays(remaining)} day${remaining === 1 ? '' : 's'} left this year`}
       </p>
-      <div className="holiday-card__settings">
-        <label className="holiday-card__field">
-          <span className="holiday-card__field-label">Annual allowance</span>
-          <span className="holiday-card__field-control">
+      <button
+        type="button"
+        className="holiday-card__edit-toggle"
+        onClick={() => setShowSettings(s => !s)}
+        aria-expanded={showSettings}
+      >
+        {showSettings ? 'Done' : 'Edit'}
+      </button>
+      {showSettings && (
+        <div className="holiday-card__settings">
+          <label className="holiday-card__field">
+            <span className="holiday-card__field-label">Annual allowance</span>
+            <span className="holiday-card__field-control">
+              <input
+                type="number"
+                min="0"
+                className="holiday-card__field-input"
+                value={allowance}
+                onChange={e => onAllowanceChange(e.target.value)}
+                aria-label="Annual holiday allowance"
+              />
+              <span className="holiday-card__field-suffix">days/yr</span>
+            </span>
+          </label>
+          <label className="holiday-card__field">
+            <span className="holiday-card__field-label">Started on</span>
             <input
-              type="number"
-              min="0"
-              className="holiday-card__field-input"
-              value={allowance}
-              onChange={e => onAllowanceChange(e.target.value)}
-              aria-label="Annual holiday allowance"
+              type="date"
+              className="holiday-card__field-input holiday-card__field-input--date"
+              value={startDate || ''}
+              onChange={e => onStartDateChange(e.target.value)}
+              aria-label="Employment start date"
             />
-            <span className="holiday-card__field-suffix">days/yr</span>
-          </span>
-        </label>
-        <label className="holiday-card__field">
-          <span className="holiday-card__field-label">Started on</span>
-          <input
-            type="date"
-            className="holiday-card__field-input holiday-card__field-input--date"
-            value={startDate || ''}
-            onChange={e => onStartDateChange(e.target.value)}
-            aria-label="Employment start date"
-          />
-        </label>
-        {isProrated && (
-          <p className="holiday-card__note">
-            Prorated from {formatStartDate(startDate)} ({formatHolidayDays(proratedAllowance)} of {allowance} days)
-          </p>
-        )}
-      </div>
+          </label>
+          {isProrated && (
+            <p className="holiday-card__note">
+              Prorated from {formatStartDate(startDate)} ({formatHolidayDays(proratedAllowance)} of {allowance} days)
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
