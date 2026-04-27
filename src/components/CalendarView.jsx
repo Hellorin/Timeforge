@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getTodayKey, isWeekend } from '../utils/time'
+import { buildDaysOffIcs, downloadIcsFile } from '../utils/icsExport'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -93,14 +94,35 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
     })
   }
 
+  const monthPrefix = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}-`
+  const canExport = Object.keys(daysOff).some(k => k.startsWith(monthPrefix))
+
+  function handleExportIcs() {
+    if (!canExport) return
+    const ics = buildDaysOffIcs(daysOff, currentMonth.year, currentMonth.month)
+    const filename = `timeforge-days-off-${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}.ics`
+    downloadIcsFile(filename, ics)
+  }
+
   return (
     <div className="cal-container">
       <div className="cal-nav">
-        <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
-        <span className="cal-month-label">
-          {getMonthLabel(currentMonth.year, currentMonth.month)}
-        </span>
-        <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
+        <div className="cal-nav-group">
+          <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
+          <span className="cal-month-label">
+            {getMonthLabel(currentMonth.year, currentMonth.month)}
+          </span>
+          <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
+        </div>
+        <button
+          className="cal-nav-export"
+          onClick={handleExportIcs}
+          disabled={!canExport}
+          title={canExport ? "Export this month's days off as .ics" : 'No days off this month'}
+          aria-label="Export days off as iCalendar file"
+        >
+          Export .ics
+        </button>
       </div>
 
       <div className="cal-grid">

@@ -609,6 +609,33 @@ body {
   background: var(--surface-alt);
 }
 
+.cal-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cal-nav-export {
+  background: var(--surface);
+  border: none;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cal-nav-export:hover:not(:disabled) {
+  background: var(--surface-alt);
+}
+
+.cal-nav-export:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .cal-grid {
   display: flex;
   flex-direction: column;
