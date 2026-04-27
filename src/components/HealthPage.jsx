@@ -123,7 +123,7 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
   const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
   const isProrated = startDate && proratedAllowance !== allowance
   const remaining = Math.max(0, proratedAllowance - used)
-  const pct = proratedAllowance > 0 ? Math.min(100, (used / proratedAllowance) * 100) : 0
+  const pct = proratedAllowance > 0 ? (remaining / proratedAllowance) * 100 : 0
   const overspent = used > proratedAllowance
   const overBy = used - proratedAllowance
 
