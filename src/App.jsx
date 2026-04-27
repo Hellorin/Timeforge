@@ -14,7 +14,7 @@ import { formatDateKey } from './utils/time'
 
 export default function App() {
   const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, setDayOffType, isTodayOff, personalDaysUsedThisYear, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
-  const { settings, setAnnualHolidayAllowance } = useAppSettings()
+  const { settings, setAnnualHolidayAllowance, setEmploymentStartDate } = useAppSettings()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
   const [hoursFormat, setHoursFormat] = useState(() => localStorage.getItem('hoursFormat') || 'decimal')
@@ -79,6 +79,8 @@ export default function App() {
             personalDaysUsedThisYear={personalDaysUsedThisYear}
             annualHolidayAllowance={settings.annualHolidayAllowance}
             onSetAnnualHolidayAllowance={setAnnualHolidayAllowance}
+            employmentStartDate={settings.employmentStartDate}
+            onSetEmploymentStartDate={setEmploymentStartDate}
           />
         )}
         {view === 'stats' && <GlobalStatsPage stats={stats} />}

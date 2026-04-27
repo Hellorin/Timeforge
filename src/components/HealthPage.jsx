@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes } from '../utils/time'
+import { computeProratedAllowance, formatHolidayDays } from '../utils/holidays'
 
 const STATUS_CONFIG = {
   'too-much': {
@@ -20,7 +21,7 @@ const STATUS_CONFIG = {
   },
 }
 
-export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance }) {
+export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance, employmentStartDate, onSetEmploymentStartDate }) {
   const healthData = useMemo(() => {
     const days = Object.fromEntries(allDays.map(d => [d.date, d.sessions]))
     return computeRecentWeeklyAvg(days, daysOff)
@@ -31,6 +32,8 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
       used={personalDaysUsedThisYear}
       allowance={annualHolidayAllowance}
       onAllowanceChange={onSetAnnualHolidayAllowance}
+      startDate={employmentStartDate}
+      onStartDateChange={onSetEmploymentStartDate}
     />
   )
 
@@ -114,11 +117,14 @@ function HealthMetric({ label, value, sub }) {
   )
 }
 
-function HolidayBalanceCard({ used, allowance, onAllowanceChange }) {
-  const remaining = Math.max(0, allowance - used)
-  const pct = allowance > 0 ? Math.min(100, (used / allowance) * 100) : 0
+function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onStartDateChange }) {
   const year = new Date().getFullYear()
-  const overspent = used > allowance
+  const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
+  const isProrated = startDate && proratedAllowance !== allowance
+  const remaining = Math.max(0, proratedAllowance - used)
+  const pct = proratedAllowance > 0 ? Math.min(100, (used / proratedAllowance) * 100) : 0
+  const overspent = used > proratedAllowance
+  const overBy = used - proratedAllowance
 
   return (
     <div className={`holiday-card${overspent ? ' holiday-card--over' : ''}`}>
@@ -129,26 +135,71 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange }) {
       <div className="holiday-card__numbers">
         <span className="holiday-card__used">{used}</span>
         <span className="holiday-card__sep">/</span>
-        <label className="holiday-card__allowance-wrap">
-          <input
-            type="number"
-            min="0"
-            className="holiday-card__allowance-input"
-            value={allowance}
-            onChange={e => onAllowanceChange(e.target.value)}
-            aria-label="Annual holiday allowance"
-          />
-          <span className="holiday-card__allowance-suffix">days</span>
-        </label>
+        {isProrated ? (
+          <span className="holiday-card__allowance-wrap">
+            <span className="holiday-card__allowance-display">{formatHolidayDays(proratedAllowance)}</span>
+            <span className="holiday-card__allowance-suffix">days</span>
+          </span>
+        ) : (
+          <label className="holiday-card__allowance-wrap">
+            <input
+              type="number"
+              min="0"
+              className="holiday-card__allowance-input"
+              value={allowance}
+              onChange={e => onAllowanceChange(e.target.value)}
+              aria-label="Annual holiday allowance"
+            />
+            <span className="holiday-card__allowance-suffix">days</span>
+          </label>
+        )}
       </div>
       <div className="holiday-card__bar-track">
         <div className="holiday-card__bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <p className="holiday-card__sub">
         {overspent
-          ? `${used - allowance} day${used - allowance === 1 ? '' : 's'} over your allowance`
-          : `${remaining} day${remaining === 1 ? '' : 's'} left this year`}
+          ? `${formatHolidayDays(overBy)} day${overBy === 1 ? '' : 's'} over your allowance`
+          : `${formatHolidayDays(remaining)} day${remaining === 1 ? '' : 's'} left this year`}
       </p>
+      <div className="holiday-card__settings">
+        <label className="holiday-card__field">
+          <span className="holiday-card__field-label">Annual allowance</span>
+          <span className="holiday-card__field-control">
+            <input
+              type="number"
+              min="0"
+              className="holiday-card__field-input"
+              value={allowance}
+              onChange={e => onAllowanceChange(e.target.value)}
+              aria-label="Annual holiday allowance"
+            />
+            <span className="holiday-card__field-suffix">days/yr</span>
+          </span>
+        </label>
+        <label className="holiday-card__field">
+          <span className="holiday-card__field-label">Started on</span>
+          <input
+            type="date"
+            className="holiday-card__field-input holiday-card__field-input--date"
+            value={startDate || ''}
+            onChange={e => onStartDateChange(e.target.value)}
+            aria-label="Employment start date"
+          />
+        </label>
+        {isProrated && (
+          <p className="holiday-card__note">
+            Prorated from {formatStartDate(startDate)} ({formatHolidayDays(proratedAllowance)} of {allowance} days)
+          </p>
+        )}
+      </div>
     </div>
   )
+}
+
+function formatStartDate(key) {
+  if (!key) return ''
+  const [y, m, d] = key.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }

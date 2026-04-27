@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 const STORAGE_KEY = 'timeforgeSettings'
 const DEFAULTS = {
   annualHolidayAllowance: 25,
+  employmentStartDate: null,
 }
 
 function loadSettings() {
@@ -31,5 +32,14 @@ export function useAppSettings() {
     })
   }, [])
 
-  return { settings, setAnnualHolidayAllowance }
+  const setEmploymentStartDate = useCallback((value) => {
+    const v = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
+    setSettings(prev => {
+      const next = { ...prev, employmentStartDate: v }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  return { settings, setAnnualHolidayAllowance, setEmploymentStartDate }
 }
