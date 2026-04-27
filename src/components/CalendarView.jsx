@@ -3,6 +3,17 @@ import { getTodayKey, isWeekend } from '../utils/time'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+const DAY_OFF_EMOJI = {
+  personal: '🌴',
+  official: '🇨🇭',
+  weekend: '🛋️',
+}
+const DAY_OFF_LABEL = {
+  personal: 'Personal day off',
+  official: 'Official day off',
+  weekend: 'Weekend',
+}
+
 function toDateKey(date) {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -157,7 +168,18 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                     onMouseLeave={() => setHoveredDay(null)}
                   >
                     <span className="cal-day-num">{date.getDate()}</span>
-                    {isDayOff && <span className="cal-day-off-badge">off</span>}
+                    {isDayOff && (() => {
+                      const kind = daysOff[key] || 'weekend'
+                      return (
+                        <span
+                          className="cal-day-off-badge cal-day-off-badge--emoji"
+                          aria-label={DAY_OFF_LABEL[kind]}
+                          title={DAY_OFF_LABEL[kind]}
+                        >
+                          {DAY_OFF_EMOJI[kind]}
+                        </span>
+                      )
+                    })()}
                     {!isDayOff && hasSessions && <span className="cal-day-dot" />}
                     {autoCheckedOut && (
                       <span
