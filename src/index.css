@@ -897,6 +897,8 @@ input[type="time"]:focus {
 
 .modal-day-off-row {
   display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   margin-bottom: 0.75rem;
 }
 
@@ -920,6 +922,11 @@ input[type="time"]:focus {
 .modal-day-off-btn--active {
   border-color: var(--accent-in);
   color: var(--accent-in);
+}
+
+.modal-day-off-btn--official.modal-day-off-btn--active {
+  border-color: #60a5fa;
+  color: #60a5fa;
 }
 
 .modal-sessions--dimmed {
@@ -1283,6 +1290,110 @@ input[type="time"]:focus {
   background: var(--surface);
   border-radius: var(--radius);
   padding: 1rem 1.1rem;
+}
+
+.holiday-card {
+  background: var(--surface-alt);
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.holiday-card--over {
+  border-color: var(--accent-out);
+}
+
+.holiday-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.holiday-card__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.holiday-card__year {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.holiday-card__numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.holiday-card__used {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.holiday-card__sep {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+.holiday-card__allowance-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.holiday-card__allowance-input {
+  width: 3rem;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  text-align: center;
+}
+
+.holiday-card__allowance-input:focus {
+  outline: none;
+  border-color: var(--accent-in);
+}
+
+.holiday-card__allowance-suffix {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.holiday-card__bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.holiday-card__bar-fill {
+  height: 100%;
+  background: var(--accent-in);
+  transition: width 0.2s ease;
+}
+
+.holiday-card--over .holiday-card__bar-fill {
+  background: var(--accent-out);
+}
+
+.holiday-card__sub {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .health-guide__title {

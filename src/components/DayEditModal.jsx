@@ -21,13 +21,14 @@ function currentHHMM() {
   return `${h}:${m}`
 }
 
-export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDayOff = false, onToggleDayOff }) {
+export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOffType = null, onSetDayOffType }) {
   const DEFAULT_ROWS = [
     { checkIn: '08:00', checkOut: '12:00' },
     { checkIn: '13:00', checkOut: '17:00' },
   ]
 
   const isWeekendDay = isWeekend(dateKey)
+  const isDayOff = !!dayOffType || isWeekendDay
 
   const [rows, setRows] = useState(() =>
     sessions.length > 0
@@ -81,13 +82,24 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, isDay
           {isWeekendDay ? (
             <span className="modal-day-off-btn modal-day-off-btn--active modal-day-off-btn--static">Weekend</span>
           ) : (
-            <button
-              className={`modal-day-off-btn${isDayOff ? ' modal-day-off-btn--active' : ''}`}
-              onClick={onToggleDayOff}
-              type="button"
-            >
-              {isDayOff ? 'Day Off ✓' : 'Mark as Day Off'}
-            </button>
+            <>
+              <button
+                className={`modal-day-off-btn${dayOffType === 'personal' ? ' modal-day-off-btn--active' : ''}`}
+                onClick={() => onSetDayOffType(dayOffType === 'personal' ? null : 'personal')}
+                type="button"
+                title="Counts against your yearly holiday allowance"
+              >
+                {dayOffType === 'personal' ? 'Personal ✓' : 'Personal Day Off'}
+              </button>
+              <button
+                className={`modal-day-off-btn modal-day-off-btn--official${dayOffType === 'official' ? ' modal-day-off-btn--active' : ''}`}
+                onClick={() => onSetDayOffType(dayOffType === 'official' ? null : 'official')}
+                type="button"
+                title="Public holiday — does not consume your allowance"
+              >
+                {dayOffType === 'official' ? 'Official ✓' : 'Official Day Off'}
+              </button>
+            </>
           )}
         </div>
 

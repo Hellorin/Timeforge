@@ -20,15 +20,24 @@ const STATUS_CONFIG = {
   },
 }
 
-export default function HealthPage({ stats, allDays, daysOff }) {
+export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance }) {
   const healthData = useMemo(() => {
     const days = Object.fromEntries(allDays.map(d => [d.date, d.sessions]))
     return computeRecentWeeklyAvg(days, daysOff)
   }, [allDays, daysOff])
 
+  const holidayCard = (
+    <HolidayBalanceCard
+      used={personalDaysUsedThisYear}
+      allowance={annualHolidayAllowance}
+      onAllowanceChange={onSetAnnualHolidayAllowance}
+    />
+  )
+
   if (!stats || stats.isEmpty) {
     return (
       <section className="health-page health-page--empty">
+        {holidayCard}
         <div className="stats-empty">
           <div className="stats-empty__icon">🫀</div>
           <p className="stats-empty__title">No data yet</p>
@@ -48,6 +57,8 @@ export default function HealthPage({ stats, allDays, daysOff }) {
 
   return (
     <section className="health-page">
+      {holidayCard}
+
       <div className={`health-status-card health-status-card--${cfg.modifier}`}>
         <div className="health-status-card__icon">{cfg.icon}</div>
         <p className="health-status-card__message">{cfg.message}</p>
@@ -99,6 +110,45 @@ function HealthMetric({ label, value, sub }) {
       <span className="health-metric__value">{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
+    </div>
+  )
+}
+
+function HolidayBalanceCard({ used, allowance, onAllowanceChange }) {
+  const remaining = Math.max(0, allowance - used)
+  const pct = allowance > 0 ? Math.min(100, (used / allowance) * 100) : 0
+  const year = new Date().getFullYear()
+  const overspent = used > allowance
+
+  return (
+    <div className={`holiday-card${overspent ? ' holiday-card--over' : ''}`}>
+      <div className="holiday-card__header">
+        <span className="holiday-card__title">Holiday balance</span>
+        <span className="holiday-card__year">{year}</span>
+      </div>
+      <div className="holiday-card__numbers">
+        <span className="holiday-card__used">{used}</span>
+        <span className="holiday-card__sep">/</span>
+        <label className="holiday-card__allowance-wrap">
+          <input
+            type="number"
+            min="0"
+            className="holiday-card__allowance-input"
+            value={allowance}
+            onChange={e => onAllowanceChange(e.target.value)}
+            aria-label="Annual holiday allowance"
+          />
+          <span className="holiday-card__allowance-suffix">days</span>
+        </label>
+      </div>
+      <div className="holiday-card__bar-track">
+        <div className="holiday-card__bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="holiday-card__sub">
+        {overspent
+          ? `${used - allowance} day${used - allowance === 1 ? '' : 's'} over your allowance`
+          : `${remaining} day${remaining === 1 ? '' : 's'} left this year`}
+      </p>
     </div>
   )
 }
