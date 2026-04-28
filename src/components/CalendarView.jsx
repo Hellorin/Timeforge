@@ -7,13 +7,11 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const DAY_OFF_EMOJI = {
   personal: '🌴',
   official: '🇨🇭',
-  unpaid: '💸',
   weekend: '🛋️',
 }
 const DAY_OFF_LABEL = {
   personal: 'Personal day off',
   official: 'Official day off',
-  unpaid: 'Unpaid day off',
   weekend: 'Weekend',
 }
 
@@ -339,14 +337,6 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
               title="Mark as official day off (public holiday)"
             >
               🇨🇭 Official
-            </button>
-            <button
-              className="cal-bulk-btn cal-bulk-btn--unpaid"
-              onClick={() => applyBulk('unpaid')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as unpaid day off (does not consume allowance)"
-            >
-              💸 Unpaid
             </button>
             <button
               className="cal-bulk-btn cal-bulk-btn--clear"
