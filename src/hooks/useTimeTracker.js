@@ -177,6 +177,27 @@ export function useTimeTracker() {
     })
   }, [])
 
+  // Bulk variant: applies the same day-off type (or clears) to many dates at once.
+  // Weekends are skipped — they're implicitly off and can't carry a personal/official marker.
+  const setDaysOffTypeBulk = useCallback((dateKeys, type) => {
+    if (!Array.isArray(dateKeys) || dateKeys.length === 0) return
+    if (type !== null && type !== 'personal' && type !== 'official') return
+    setData(prev => {
+      const daysOff = { ...prev.daysOff }
+      for (const dateKey of dateKeys) {
+        if (isWeekend(dateKey)) continue
+        if (type === null) {
+          delete daysOff[dateKey]
+        } else {
+          daysOff[dateKey] = type
+        }
+      }
+      const next = { ...prev, daysOff }
+      saveData(next)
+      return next
+    })
+  }, [])
+
   const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
 
   const stats = useMemo(() => computeGlobalStats(data.days, data.daysOff), [data.days, data.daysOff])
@@ -214,6 +235,7 @@ export function useTimeTracker() {
     setDaySessions,
     daysOff: data.daysOff,
     setDayOffType,
+    setDaysOffTypeBulk,
     isTodayOff,
     personalDaysUsedThisYear,
     setMilestoneCallback,

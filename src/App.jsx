@@ -12,7 +12,7 @@ import HealthPage from './components/HealthPage'
 import { formatDateKey } from './utils/time'
 
 export default function App() {
-  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, setDayOffType, isTodayOff, personalDaysUsedThisYear, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
+  const { isCheckedIn, checkIn, checkOut, todaySessions, todayKey, allDays, setDaySessions, daysOff, setDayOffType, setDaysOffTypeBulk, isTodayOff, personalDaysUsedThisYear, setMilestoneCallback, weekTargetMs, weekTotalOtherDaysMs, stats } = useTimeTracker()
   const { settings, setAnnualHolidayAllowance, setEmploymentStartDate } = useAppSettings()
   const [view, setView] = useState('tracker')
   const [selectedDay, setSelectedDay] = useState(null)
@@ -68,6 +68,7 @@ export default function App() {
             allDays={allDays}
             daysOff={daysOff}
             onDayClick={(key, dayData) => setSelectedDay({ dateKey: key, sessions: dayData?.sessions ?? [] })}
+            onBulkSetDaysOffType={setDaysOffTypeBulk}
           />
         )}
         {view === 'health' && (
