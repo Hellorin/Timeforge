@@ -64,7 +64,7 @@ function weekColor(totalMs, targetMs) {
   return null
 }
 
-export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
+export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulkSetDaysOffType }) {
   const today = getTodayKey()
   const [year, month] = (() => {
     const d = new Date()
@@ -73,6 +73,31 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
   const [currentMonth, setCurrentMonth] = useState({ year, month })
   const [hoveredDay, setHoveredDay] = useState(null)
   const touchStartRef = useRef(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedKeys, setSelectedKeys] = useState(() => new Set())
+
+  function toggleSelectMode() {
+    setSelectMode(m => {
+      if (m) setSelectedKeys(new Set())
+      return !m
+    })
+  }
+
+  function toggleDaySelection(key) {
+    setSelectedKeys(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function applyBulk(type) {
+    if (selectedKeys.size === 0) return
+    onBulkSetDaysOffType?.(Array.from(selectedKeys), type)
+    setSelectedKeys(new Set())
+    setSelectMode(false)
+  }
 
   const dayMap = new Map(allDays.map(d => [d.date, d]))
 
@@ -134,15 +159,25 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
           </span>
           <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
         </div>
-        <button
-          className="cal-nav-export"
-          onClick={handleExportIcs}
-          disabled={!canExport}
-          title={canExport ? "Export this month's days off as .ics" : 'No days off this month'}
-          aria-label="Export days off as iCalendar file"
-        >
-          Export .ics
-        </button>
+        <div className="cal-nav-actions">
+          <button
+            className={`cal-nav-export${selectMode ? ' cal-nav-export--active' : ''}`}
+            onClick={toggleSelectMode}
+            title={selectMode ? 'Exit selection mode' : 'Select multiple days to mark as off'}
+            aria-pressed={selectMode}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </button>
+          <button
+            className="cal-nav-export"
+            onClick={handleExportIcs}
+            disabled={!canExport || selectMode}
+            title={canExport ? "Export this month's days off as .ics" : 'No days off this month'}
+            aria-label="Export days off as iCalendar file"
+          >
+            Export .ics
+          </button>
+        </div>
       </div>
 
       <div
@@ -193,10 +228,13 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                 const isCurrentMonth = date >= firstDay && date <= lastDay
                 const isToday = key === today
                 const dayData = dayMap.get(key)
-                const isDayOff = !!daysOff[key] || isWeekend(key)
+                const isWeekendDay = isWeekend(key)
+                const isDayOff = !!daysOff[key] || isWeekendDay
                 const hasSessions = !isDayOff && dayData && dayData.sessions.length > 0
 
                 const autoCheckedOut = !isDayOff && !!dayData?.autoCheckedOut
+                const isSelectable = selectMode && !isWeekendDay
+                const isSelected = selectedKeys.has(key)
 
                 let cls = 'cal-day'
                 if (!isCurrentMonth) cls += ' cal-day--other-month'
@@ -204,13 +242,23 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                 if (hasSessions) cls += ' cal-day--has-sessions'
                 if (isDayOff) cls += ' cal-day--day-off'
                 if (autoCheckedOut) cls += ' cal-day--auto-checkout'
+                if (selectMode && !isSelectable) cls += ' cal-day--unselectable'
+                if (isSelected) cls += ' cal-day--selected'
+
+                function handleClick() {
+                  if (selectMode) {
+                    if (isSelectable) toggleDaySelection(key)
+                    return
+                  }
+                  onDayClick(key, dayData ?? null)
+                }
 
                 return (
                   <div
                     key={key}
                     className={cls}
-                    onClick={() => onDayClick(key, dayData ?? null)}
-                    onMouseEnter={() => hasSessions && setHoveredDay(key)}
+                    onClick={handleClick}
+                    onMouseEnter={() => !selectMode && hasSessions && setHoveredDay(key)}
                     onMouseLeave={() => setHoveredDay(null)}
                   >
                     <span className="cal-day-num">{date.getDate()}</span>
@@ -234,7 +282,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
                         title="Auto-checked-out at 21:00"
                       >⚠</span>
                     )}
-                    {hasSessions && hoveredDay === key && (
+                    {!selectMode && hasSessions && hoveredDay === key && (
                       <div className="cal-day-tooltip">
                         <strong>{dayData.totalDecimal.toFixed(1)}h</strong>
                         <span> · {dayData.sessions.length} session{dayData.sessions.length !== 1 ? 's' : ''}</span>
@@ -267,6 +315,40 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
           )
         })}
       </div>
+
+      {selectMode && (
+        <div className="cal-bulk-bar" role="toolbar" aria-label="Bulk day-off actions">
+          <span className="cal-bulk-count">
+            {selectedKeys.size} day{selectedKeys.size === 1 ? '' : 's'} selected
+          </span>
+          <div className="cal-bulk-actions">
+            <button
+              className="cal-bulk-btn cal-bulk-btn--personal"
+              onClick={() => applyBulk('personal')}
+              disabled={selectedKeys.size === 0}
+              title="Mark as personal day off (counts against allowance)"
+            >
+              🌴 Personal
+            </button>
+            <button
+              className="cal-bulk-btn cal-bulk-btn--official"
+              onClick={() => applyBulk('official')}
+              disabled={selectedKeys.size === 0}
+              title="Mark as official day off (public holiday)"
+            >
+              🇨🇭 Official
+            </button>
+            <button
+              className="cal-bulk-btn cal-bulk-btn--clear"
+              onClick={() => applyBulk(null)}
+              disabled={selectedKeys.size === 0}
+              title="Clear day-off marker"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
