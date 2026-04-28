@@ -7,6 +7,7 @@
 const SUMMARY_BY_TYPE = {
   personal: 'Day Off (Personal)',
   official: 'Day Off (Official)',
+  unpaid: 'Day Off (Unpaid)',
 }
 
 function pad2(n) {
@@ -43,7 +44,7 @@ function escapeIcsText(s) {
 /**
  * Builds an iCalendar string for the days off in the given month.
  *
- * @param {Record<string, 'personal' | 'official'>} daysOff
+ * @param {Record<string, 'personal' | 'official' | 'unpaid'>} daysOff
  * @param {number} year - 4-digit year
  * @param {number} month - 0-based month (matches JS Date.getMonth)
  * @returns {string} iCalendar content with CRLF line endings
