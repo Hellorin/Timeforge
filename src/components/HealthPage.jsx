@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
-import { decimalToHoursMinutes } from '../utils/time'
+import { decimalToHoursMinutes, getTodayKey } from '../utils/time'
 import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from '../utils/holidays'
+import HolidayChart from './HolidayChart'
 
 const STATUS_CONFIG = {
   'too-much': {
@@ -21,7 +22,7 @@ const STATUS_CONFIG = {
   },
 }
 
-export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, personalDaysPlannedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance, employmentStartDate, onSetEmploymentStartDate }) {
+export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance, employmentStartDate, onSetEmploymentStartDate }) {
   const healthData = useMemo(() => {
     const days = Object.fromEntries(allDays.map(d => [d.date, d.sessions]))
     return computeRecentWeeklyAvg(days, daysOff)
@@ -30,7 +31,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   const holidayCard = (
     <HolidayBalanceCard
       used={personalDaysUsedThisYear}
-      planned={personalDaysPlannedThisYear}
+      daysOff={daysOff}
       allowance={annualHolidayAllowance}
       onAllowanceChange={onSetAnnualHolidayAllowance}
       startDate={employmentStartDate}
@@ -118,10 +119,12 @@ function HealthMetric({ label, value, sub }) {
   )
 }
 
-function HolidayBalanceCard({ used, planned, allowance, onAllowanceChange, startDate, onStartDateChange }) {
+function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange }) {
   const [showSettings, setShowSettings] = useState(false)
   const today = new Date()
   const year = today.getFullYear()
+  const todayKey = getTodayKey()
+
   const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
   const accrued = computeAccruedDays(startDate, allowance, today)
   const isProrated = startDate && proratedAllowance !== allowance
@@ -129,9 +132,52 @@ function HolidayBalanceCard({ used, planned, allowance, onAllowanceChange, start
   const overspent = available < 0
   const pct = accrued > 0 ? Math.min(100, (used / accrued) * 100) : 0
 
+  // Future personal days sorted chronologically — used for the temporal check
+  const futurePlannedKeys = useMemo(() =>
+    Object.entries(daysOff)
+      .filter(([k, v]) => v === 'personal' && k > todayKey && k.startsWith(`${year}-`))
+      .map(([k]) => k)
+      .sort()
+  , [daysOff, todayKey, year])
+
+  const planned = futurePlannedKeys.length
   const projected = used + planned
-  const projectionSurplus = proratedAllowance - projected
-  const projectionBreach = projectionSurplus < 0
+  const yearEndSurplus = proratedAllowance - projected
+
+  // Walk planned days chronologically; flag the first date where the running
+  // balance (accrued by that date minus all days taken up to that date) < 0
+  const firstDeficit = useMemo(() => {
+    for (let i = 0; i < futurePlannedKeys.length; i++) {
+      const key = futurePlannedKeys[i]
+      const [ky, km, kd] = key.split('-').map(Number)
+      const dateAtKey = new Date(ky, km - 1, kd)
+      const accruedAtDate = computeAccruedDays(startDate, allowance, dateAtKey)
+      const totalUsedAtDate = used + (i + 1)
+      if (accruedAtDate < totalUsedAtDate) {
+        return {
+          month: new Date(ky, km - 1, 1).toLocaleDateString(undefined, { month: 'long' }),
+          accruedAtDate,
+          shortfall: totalUsedAtDate - accruedAtDate,
+        }
+      }
+    }
+    return null
+  }, [futurePlannedKeys, used, startDate, allowance])
+
+  let badgeClass, badgeText, deficitNote
+  if (firstDeficit) {
+    badgeClass = 'over'
+    badgeText = `⚠ Deficit expected in ${firstDeficit.month}`
+    deficitNote = `Only ${formatHolidayDays(firstDeficit.accruedAtDate)} days earned by then — ${formatHolidayDays(firstDeficit.shortfall)} short`
+  } else if (yearEndSurplus < 0) {
+    badgeClass = 'over'
+    badgeText = `⚠ ${formatHolidayDays(Math.abs(yearEndSurplus))} days over by year end`
+    deficitNote = null
+  } else {
+    badgeClass = 'ok'
+    badgeText = `✓ ${formatHolidayDays(yearEndSurplus)} days to spare`
+    deficitNote = null
+  }
 
   return (
     <div className={`holiday-card${overspent ? ' holiday-card--over' : ''}`}>
@@ -159,16 +205,16 @@ function HolidayBalanceCard({ used, planned, allowance, onAllowanceChange, start
       <div className="holiday-card__projection">
         <div className="holiday-card__projection-header">
           <span className="holiday-card__projection-label">Year-end projection</span>
-          <span className={`holiday-card__projection-badge holiday-card__projection-badge--${projectionBreach ? 'over' : 'ok'}`}>
-            {projectionBreach
-              ? `⚠ ${formatHolidayDays(Math.abs(projectionSurplus))} days over`
-              : `✓ ${formatHolidayDays(projectionSurplus)} days to spare`}
+          <span className={`holiday-card__projection-badge holiday-card__projection-badge--${badgeClass}`}>
+            {badgeText}
           </span>
         </div>
         <p className="holiday-card__sub">
           {used} used + {planned} planned = {projected} of {formatHolidayDays(proratedAllowance)} days
         </p>
+        {deficitNote && <p className="holiday-card__sub">{deficitNote}</p>}
       </div>
+      <HolidayChart daysOff={daysOff} allowance={allowance} startDate={startDate} />
       <button
         type="button"
         className="holiday-card__edit-toggle"

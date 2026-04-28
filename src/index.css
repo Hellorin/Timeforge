@@ -1512,6 +1512,75 @@ input[type="time"]:focus {
   color: var(--accent-out);
 }
 
+.holiday-chart {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.holiday-chart__grid {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1;
+  fill: none;
+}
+
+.holiday-chart__earned {
+  stroke: var(--accent-in);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.holiday-chart__earned--future {
+  stroke-dasharray: 5 3;
+  opacity: 0.45;
+}
+
+.holiday-chart__used-line {
+  stroke: var(--accent-out);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.holiday-chart__used-line--future {
+  stroke-dasharray: 5 3;
+  opacity: 0.45;
+}
+
+.holiday-chart__today-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+.holiday-chart__axis-label {
+  font-size: 6.5px;
+  fill: var(--text-muted);
+  font-family: inherit;
+}
+
+.holiday-chart__month-label {
+  font-size: 7px;
+  fill: var(--text-muted);
+  font-family: inherit;
+}
+
+.holiday-chart__month-label--current {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+.holiday-chart__legend-earned {
+  fill: var(--accent-in);
+}
+
+.holiday-chart__legend-used {
+  fill: var(--accent-out);
+}
+
 .health-guide__title {
   margin: 0 0 0.6rem;
   font-size: 0.8rem;
