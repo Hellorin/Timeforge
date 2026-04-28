@@ -10,6 +10,46 @@ function parseDateKey(str) {
   return date
 }
 
+export function computeAccruedDays(startDateKey, annualAllowance, today = new Date()) {
+  const allowance = Number(annualAllowance) || 0
+  const monthlyRate = allowance / 12
+  const year = today.getFullYear()
+
+  const yearStart = new Date(year, 0, 1)
+  const start = parseDateKey(startDateKey)
+  const earnFrom = (start && start > yearStart) ? start : yearStart
+
+  if (earnFrom > today) return 0
+
+  const fromY = earnFrom.getFullYear()
+  const fromM = earnFrom.getMonth()
+  const fromD = earnFrom.getDate()
+  const toY = today.getFullYear()
+  const toM = today.getMonth()
+  const toD = today.getDate()
+
+  let months = 0
+
+  if (fromY === toY && fromM === toM) {
+    const daysInMonth = new Date(toY, toM + 1, 0).getDate()
+    months = (toD - fromD + 1) / daysInMonth
+  } else {
+    const daysInFromMonth = new Date(fromY, fromM + 1, 0).getDate()
+    months += (daysInFromMonth - fromD + 1) / daysInFromMonth
+    let m = fromM + 1
+    let y = fromY
+    while (y < toY || (y === toY && m < toM)) {
+      months += 1
+      m++
+      if (m > 11) { m = 0; y++ }
+    }
+    const daysInToMonth = new Date(toY, toM + 1, 0).getDate()
+    months += toD / daysInToMonth
+  }
+
+  return monthlyRate * months
+}
+
 export function computeProratedAllowance(startDateKey, annualAllowance, year = new Date().getFullYear()) {
   const allowance = Number(annualAllowance) || 0
   const start = parseDateKey(startDateKey)

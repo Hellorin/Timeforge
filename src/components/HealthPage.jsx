@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes } from '../utils/time'
-import { computeProratedAllowance, formatHolidayDays } from '../utils/holidays'
+import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from '../utils/holidays'
 
 const STATUS_CONFIG = {
   'too-much': {
@@ -119,13 +119,14 @@ function HealthMetric({ label, value, sub }) {
 
 function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onStartDateChange }) {
   const [showSettings, setShowSettings] = useState(false)
-  const year = new Date().getFullYear()
+  const today = new Date()
+  const year = today.getFullYear()
   const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
+  const accrued = computeAccruedDays(startDate, allowance, today)
   const isProrated = startDate && proratedAllowance !== allowance
-  const remaining = Math.max(0, proratedAllowance - used)
-  const pct = proratedAllowance > 0 ? (remaining / proratedAllowance) * 100 : 0
-  const overspent = used > proratedAllowance
-  const overBy = used - proratedAllowance
+  const available = accrued - used
+  const overspent = available < 0
+  const pct = accrued > 0 ? Math.min(100, (used / accrued) * 100) : 0
 
   return (
     <div className={`holiday-card${overspent ? ' holiday-card--over' : ''}`}>
@@ -134,20 +135,21 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
         <span className="holiday-card__year">{year}</span>
       </div>
       <div className="holiday-card__numbers">
-        <span className="holiday-card__used">{used}</span>
-        <span className="holiday-card__sep">/</span>
+        <span className="holiday-card__used">{formatHolidayDays(Math.max(0, available))}</span>
         <span className="holiday-card__allowance-wrap">
-          <span className="holiday-card__allowance-display">{formatHolidayDays(proratedAllowance)}</span>
-          <span className="holiday-card__allowance-suffix">days</span>
+          <span className="holiday-card__allowance-suffix">days available</span>
         </span>
       </div>
+      <p className="holiday-card__sub">
+        {overspent
+          ? `${formatHolidayDays(Math.abs(available))} days ahead of your accrual`
+          : `${formatHolidayDays(accrued)} earned so far · ${used} used`}
+      </p>
       <div className="holiday-card__bar-track">
         <div className="holiday-card__bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <p className="holiday-card__sub">
-        {overspent
-          ? `${formatHolidayDays(overBy)} day${overBy === 1 ? '' : 's'} over your allowance`
-          : `${formatHolidayDays(remaining)} day${remaining === 1 ? '' : 's'} left this year`}
+        Total this year: <strong>{formatHolidayDays(proratedAllowance)}</strong> days{isProrated ? ' (prorated)' : ''}
       </p>
       <button
         type="button"
