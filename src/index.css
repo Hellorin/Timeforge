@@ -1476,6 +1476,42 @@ input[type="time"]:focus {
   font-style: italic;
 }
 
+.holiday-card__projection {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.holiday-card__projection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.holiday-card__projection-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.holiday-card__projection-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.holiday-card__projection-badge--ok {
+  color: var(--accent-in);
+}
+
+.holiday-card__projection-badge--over {
+  color: var(--accent-out);
+}
+
 .health-guide__title {
   margin: 0 0 0.6rem;
   font-size: 0.8rem;

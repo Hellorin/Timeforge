@@ -21,7 +21,7 @@ const STATUS_CONFIG = {
   },
 }
 
-export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance, employmentStartDate, onSetEmploymentStartDate }) {
+export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedThisYear, personalDaysPlannedThisYear, annualHolidayAllowance, onSetAnnualHolidayAllowance, employmentStartDate, onSetEmploymentStartDate }) {
   const healthData = useMemo(() => {
     const days = Object.fromEntries(allDays.map(d => [d.date, d.sessions]))
     return computeRecentWeeklyAvg(days, daysOff)
@@ -30,6 +30,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   const holidayCard = (
     <HolidayBalanceCard
       used={personalDaysUsedThisYear}
+      planned={personalDaysPlannedThisYear}
       allowance={annualHolidayAllowance}
       onAllowanceChange={onSetAnnualHolidayAllowance}
       startDate={employmentStartDate}
@@ -117,7 +118,7 @@ function HealthMetric({ label, value, sub }) {
   )
 }
 
-function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onStartDateChange }) {
+function HolidayBalanceCard({ used, planned, allowance, onAllowanceChange, startDate, onStartDateChange }) {
   const [showSettings, setShowSettings] = useState(false)
   const today = new Date()
   const year = today.getFullYear()
@@ -127,6 +128,10 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
   const available = accrued - used
   const overspent = available < 0
   const pct = accrued > 0 ? Math.min(100, (used / accrued) * 100) : 0
+
+  const projected = used + planned
+  const projectionSurplus = proratedAllowance - projected
+  const projectionBreach = projectionSurplus < 0
 
   return (
     <div className={`holiday-card${overspent ? ' holiday-card--over' : ''}`}>
@@ -151,6 +156,19 @@ function HolidayBalanceCard({ used, allowance, onAllowanceChange, startDate, onS
       <p className="holiday-card__sub">
         Total this year: <strong>{formatHolidayDays(proratedAllowance)}</strong> days{isProrated ? ' (prorated)' : ''}
       </p>
+      <div className="holiday-card__projection">
+        <div className="holiday-card__projection-header">
+          <span className="holiday-card__projection-label">Year-end projection</span>
+          <span className={`holiday-card__projection-badge holiday-card__projection-badge--${projectionBreach ? 'over' : 'ok'}`}>
+            {projectionBreach
+              ? `⚠ ${formatHolidayDays(Math.abs(projectionSurplus))} days over`
+              : `✓ ${formatHolidayDays(projectionSurplus)} days to spare`}
+          </span>
+        </div>
+        <p className="holiday-card__sub">
+          {used} used + {planned} planned = {projected} of {formatHolidayDays(proratedAllowance)} days
+        </p>
+      </div>
       <button
         type="button"
         className="holiday-card__edit-toggle"

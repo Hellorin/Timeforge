@@ -212,6 +212,16 @@ export function useTimeTracker() {
     return n
   }, [data.daysOff])
 
+  const personalDaysPlannedThisYear = useMemo(() => {
+    const prefix = `${new Date().getFullYear()}-`
+    const todayKey = getTodayKey()
+    let n = 0
+    for (const [k, v] of Object.entries(data.daysOff)) {
+      if (v === 'personal' && k.startsWith(prefix) && k > todayKey) n++
+    }
+    return n
+  }, [data.daysOff])
+
   const setMilestoneCallback = useCallback((fn) => { milestoneCallbackRef.current = fn }, [])
 
   // Week progress — all in raw ms for minute-level precision (live today added in TodaySummary)
@@ -239,6 +249,7 @@ export function useTimeTracker() {
     setDaysOffTypeBulk,
     isTodayOff,
     personalDaysUsedThisYear,
+    personalDaysPlannedThisYear,
     setMilestoneCallback,
     weekTargetMs,
     weekTotalOtherDaysMs,
