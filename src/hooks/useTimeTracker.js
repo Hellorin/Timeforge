@@ -204,7 +204,7 @@ export function useTimeTracker() {
 
   const personalDaysUsedThisYear = useMemo(() => {
     const prefix = `${new Date().getFullYear()}-`
-    const todayKey = new Date().toISOString().slice(0, 10)
+    const todayKey = getTodayKey()
     let n = 0
     for (const [k, v] of Object.entries(data.daysOff)) {
       if (v === 'personal' && k.startsWith(prefix) && k <= todayKey) n++
