@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { getTodayKey, isWeekend } from '../utils/time'
 import { buildDaysOffIcs, downloadIcsFile } from '../utils/icsExport'
 
@@ -72,6 +72,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
   })()
   const [currentMonth, setCurrentMonth] = useState({ year, month })
   const [hoveredDay, setHoveredDay] = useState(null)
+  const touchStartRef = useRef(null)
 
   const dayMap = new Map(allDays.map(d => [d.date, d]))
 
@@ -96,6 +97,25 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
 
   const monthPrefix = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}-`
   const canExport = Object.keys(daysOff).some(k => k.startsWith(monthPrefix))
+
+  function handleTouchStart(e) {
+    const t = e.touches[0]
+    touchStartRef.current = { x: t.clientX, y: t.clientY }
+  }
+
+  function handleTouchEnd(e) {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    const SWIPE_THRESHOLD = 50
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return
+    if (Math.abs(dy) > Math.abs(dx)) return
+    if (dx < 0) nextMonth()
+    else prevMonth()
+  }
 
   function handleExportIcs() {
     if (!canExport) return
@@ -125,7 +145,11 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {} }) {
         </button>
       </div>
 
-      <div className="cal-grid">
+      <div
+        className="cal-grid"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Header row */}
         <div className="cal-header-row">
           {DAY_LABELS.map(d => (
