@@ -50,7 +50,7 @@ function migrateDaysOff(data) {
     if (v === true) {
       next[k] = 'personal'
       changed = true
-    } else if (v === 'personal' || v === 'official') {
+    } else if (v === 'personal' || v === 'official' || v === 'unpaid') {
       next[k] = v
     }
   }
@@ -160,13 +160,13 @@ export function useTimeTracker() {
     })
   }, [])
 
-  // type: 'personal' | 'official' | null (null clears the day-off marker)
+  // type: 'personal' | 'official' | 'unpaid' | null (null clears the day-off marker)
   const setDayOffType = useCallback((dateKey, type) => {
     setData(prev => {
       const daysOff = { ...prev.daysOff }
       if (type === null) {
         delete daysOff[dateKey]
-      } else if (type === 'personal' || type === 'official') {
+      } else if (type === 'personal' || type === 'official' || type === 'unpaid') {
         daysOff[dateKey] = type
       } else {
         return prev
@@ -181,7 +181,7 @@ export function useTimeTracker() {
   // Weekends are skipped — they're implicitly off and can't carry a personal/official marker.
   const setDaysOffTypeBulk = useCallback((dateKeys, type) => {
     if (!Array.isArray(dateKeys) || dateKeys.length === 0) return
-    if (type !== null && type !== 'personal' && type !== 'official') return
+    if (type !== null && type !== 'personal' && type !== 'official' && type !== 'unpaid') return
     setData(prev => {
       const daysOff = { ...prev.daysOff }
       for (const dateKey of dateKeys) {

@@ -99,6 +99,14 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
               >
                 {dayOffType === 'official' ? 'Official ✓' : 'Official Day Off'}
               </button>
+              <button
+                className={`modal-day-off-btn modal-day-off-btn--unpaid${dayOffType === 'unpaid' ? ' modal-day-off-btn--active' : ''}`}
+                onClick={() => onSetDayOffType(dayOffType === 'unpaid' ? null : 'unpaid')}
+                type="button"
+                title="Unpaid leave — does not consume your allowance"
+              >
+                {dayOffType === 'unpaid' ? 'Unpaid ✓' : 'Unpaid Day Off'}
+              </button>
             </>
           )}
         </div>
