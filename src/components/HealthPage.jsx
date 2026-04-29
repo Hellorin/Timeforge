@@ -132,51 +132,23 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
   const overspent = available < 0
   const pct = accrued > 0 ? Math.min(100, (used / accrued) * 100) : 0
 
-  // Future personal days sorted chronologically — used for the temporal check
   const futurePlannedKeys = useMemo(() =>
     Object.entries(daysOff)
       .filter(([k, v]) => v === 'personal' && k > todayKey && k.startsWith(`${year}-`))
       .map(([k]) => k)
-      .sort()
   , [daysOff, todayKey, year])
 
   const planned = futurePlannedKeys.length
   const projected = used + planned
   const yearEndSurplus = proratedAllowance - projected
 
-  // Walk planned days chronologically; flag the first date where the running
-  // balance (accrued by that date minus all days taken up to that date) < 0
-  const firstDeficit = useMemo(() => {
-    for (let i = 0; i < futurePlannedKeys.length; i++) {
-      const key = futurePlannedKeys[i]
-      const [ky, km, kd] = key.split('-').map(Number)
-      const dateAtKey = new Date(ky, km - 1, kd)
-      const accruedAtDate = computeAccruedDays(startDate, allowance, dateAtKey)
-      const totalUsedAtDate = used + (i + 1)
-      if (accruedAtDate < totalUsedAtDate) {
-        return {
-          month: new Date(ky, km - 1, 1).toLocaleDateString(undefined, { month: 'long' }),
-          accruedAtDate,
-          shortfall: totalUsedAtDate - accruedAtDate,
-        }
-      }
-    }
-    return null
-  }, [futurePlannedKeys, used, startDate, allowance])
-
-  let badgeClass, badgeText, deficitNote
-  if (firstDeficit) {
-    badgeClass = 'over'
-    badgeText = `⚠ Deficit expected in ${firstDeficit.month}`
-    deficitNote = `Only ${formatHolidayDays(firstDeficit.accruedAtDate)} days earned by then — ${formatHolidayDays(firstDeficit.shortfall)} short`
-  } else if (yearEndSurplus < 0) {
+  let badgeClass, badgeText
+  if (yearEndSurplus < 0) {
     badgeClass = 'over'
     badgeText = `⚠ ${formatHolidayDays(Math.abs(yearEndSurplus))} days over by year end`
-    deficitNote = null
   } else {
     badgeClass = 'ok'
     badgeText = `✓ ${formatHolidayDays(yearEndSurplus)} days to spare`
-    deficitNote = null
   }
 
   return (
@@ -212,7 +184,6 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
         <p className="holiday-card__sub">
           {used} used + {planned} planned = {projected} of {formatHolidayDays(proratedAllowance)} days
         </p>
-        {deficitNote && <p className="holiday-card__sub">{deficitNote}</p>}
       </div>
       <HolidayChart daysOff={daysOff} allowance={allowance} startDate={startDate} />
       <button
