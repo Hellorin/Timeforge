@@ -21,21 +21,32 @@ export function computeAccruedDays(startDateKey, annualAllowance, today = new Da
 
   if (earnFrom > today) return 0
 
-  // Credit is given at the end of each complete month.
-  // Only months whose last day has already passed are counted.
-  let completedMonths = 0
+  // Credit is given at the end of each calendar month, once it has fully
+  // elapsed. The hire month is prorated using the same fraction as
+  // computeProratedAllowance so that, by Dec 31, accrued equals the
+  // prorated annual allowance.
+  let accrued = 0
   let y = earnFrom.getFullYear()
   let m = earnFrom.getMonth()
+
+  const firstMonthEnd = new Date(y, m + 1, 0)
+  if (firstMonthEnd > today) return 0
+
+  const daysInFirstMonth = firstMonthEnd.getDate()
+  const firstMonthFraction = (daysInFirstMonth - earnFrom.getDate() + 1) / daysInFirstMonth
+  accrued += monthlyRate * firstMonthFraction
+  m++
+  if (m > 11) { m = 0; y++ }
 
   while (y <= year) {
     const monthEnd = new Date(y, m + 1, 0)
     if (monthEnd > today) break
-    completedMonths++
+    accrued += monthlyRate
     m++
     if (m > 11) { m = 0; y++ }
   }
 
-  return monthlyRate * completedMonths
+  return accrued
 }
 
 export function computeProratedAllowance(startDateKey, annualAllowance, year = new Date().getFullYear()) {
