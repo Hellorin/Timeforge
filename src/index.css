@@ -886,7 +886,9 @@ body {
 
 .cal-bulk-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
+  row-gap: 0.4rem;
 }
 
 .cal-bulk-btn {
@@ -920,6 +922,11 @@ body {
 .cal-bulk-btn--official:hover:not(:disabled) {
   border-color: #60a5fa;
   color: #60a5fa;
+}
+
+.cal-bulk-btn--unpaid:hover:not(:disabled) {
+  border-color: #f59e0b;
+  color: #f59e0b;
 }
 
 .cal-bulk-btn--clear:hover:not(:disabled) {
@@ -1069,6 +1076,11 @@ input[type="time"]:focus {
 .modal-day-off-btn--official.modal-day-off-btn--active {
   border-color: #60a5fa;
   color: #60a5fa;
+}
+
+.modal-day-off-btn--unpaid.modal-day-off-btn--active {
+  border-color: #f59e0b;
+  color: #f59e0b;
 }
 
 .modal-sessions--dimmed {
