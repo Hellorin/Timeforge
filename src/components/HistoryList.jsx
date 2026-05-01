@@ -136,22 +136,32 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
   })
 
   const weekGroups = useMemo(() => {
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear
+
     // Always include the current week, even when it spans into the previous
     // month and the user has no entries logged yet for the current month.
-    const currentMonthWeekKeys = new Set([currentWeekKey])
+    // Also include weeks with logged data in the previous month so that, on
+    // transition into a new month, the prior month's weeks remain visible
+    // (including a week that started in the month before that but had days
+    // in the previous month).
+    const includedWeekKeys = new Set([currentWeekKey])
     for (const day of historyDays) {
       const [y, m] = day.date.split('-').map(Number)
-      if (y === currentYear && m === currentMonth) {
-        currentMonthWeekKeys.add(getWeekKey(day.date))
+      const inCurrentMonth = y === currentYear && m === currentMonth
+      const inPreviousMonth = y === prevYear && m === prevMonth
+      if (inCurrentMonth || inPreviousMonth) {
+        includedWeekKeys.add(getWeekKey(day.date))
       }
     }
 
-    // Group days by week, but only for weeks that touch the current month.
-    // This includes days from the previous month that belong to a qualifying week.
+    // Group days by week, but only for weeks that touch the current or
+    // previous month. This includes days from adjacent months that belong
+    // to a qualifying week.
     const groups = new Map()
     for (const day of liveDays) {
       const wk = getWeekKey(day.date)
-      if (currentMonthWeekKeys.has(wk)) {
+      if (includedWeekKeys.has(wk)) {
         if (!groups.has(wk)) groups.set(wk, [])
         groups.get(wk).push(day)
       }
