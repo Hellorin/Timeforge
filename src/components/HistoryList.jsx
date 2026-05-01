@@ -136,38 +136,30 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
   })
 
   const weekGroups = useMemo(() => {
-    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1
-    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear
-
-    // Always include the current week, even when it spans into the previous
-    // month and the user has no entries logged yet for the current month.
-    // Also include weeks with logged data in the previous month so that, on
-    // transition into a new month, the prior month's weeks remain visible
-    // (including a week that started in the month before that but had days
-    // in the previous month).
-    const includedWeekKeys = new Set([currentWeekKey])
-    for (const day of historyDays) {
-      const [y, m] = day.date.split('-').map(Number)
-      const inCurrentMonth = y === currentYear && m === currentMonth
-      const inPreviousMonth = y === prevYear && m === prevMonth
-      if (inCurrentMonth || inPreviousMonth) {
-        includedWeekKeys.add(getWeekKey(day.date))
-      }
+    // Show every week that has at least one day in the current month — a
+    // Mon–Sun week intersects the current month iff its Monday or Sunday
+    // falls in it. The current week is naturally included because today is
+    // always in the current month.
+    function weekTouchesCurrentMonth(weekKey) {
+      const [y, m, d] = weekKey.split('-').map(Number)
+      const monday = new Date(y, m - 1, d)
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      const inCurrentMonth = date =>
+        date.getFullYear() === currentYear && date.getMonth() + 1 === currentMonth
+      return inCurrentMonth(monday) || inCurrentMonth(sunday)
     }
 
-    // Group days by week, but only for weeks that touch the current or
-    // previous month. This includes days from adjacent months that belong
-    // to a qualifying week.
     const groups = new Map()
     for (const day of liveDays) {
       const wk = getWeekKey(day.date)
-      if (includedWeekKeys.has(wk)) {
+      if (weekTouchesCurrentMonth(wk)) {
         if (!groups.has(wk)) groups.set(wk, [])
         groups.get(wk).push(day)
       }
     }
     return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [historyDays, liveDays, currentYear, currentMonth, currentWeekKey])
+  }, [liveDays, currentYear, currentMonth])
 
   if (weekGroups.length === 0) return null
 
