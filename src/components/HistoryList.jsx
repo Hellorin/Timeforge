@@ -136,8 +136,9 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
   })
 
   const weekGroups = useMemo(() => {
-    // Collect week keys that contain at least one day in the current month
-    const currentMonthWeekKeys = new Set()
+    // Always include the current week, even when it spans into the previous
+    // month and the user has no entries logged yet for the current month.
+    const currentMonthWeekKeys = new Set([currentWeekKey])
     for (const day of historyDays) {
       const [y, m] = day.date.split('-').map(Number)
       if (y === currentYear && m === currentMonth) {
@@ -156,7 +157,7 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
       }
     }
     return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [historyDays, currentYear, currentMonth])
+  }, [historyDays, liveDays, currentYear, currentMonth, currentWeekKey])
 
   if (weekGroups.length === 0) return null
 
