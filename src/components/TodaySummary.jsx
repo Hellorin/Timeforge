@@ -38,8 +38,8 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   const weekDone = weekRemainingMs === 0
   const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
 
-  // Overtime vs pace: how much ahead/behind relative to elapsed workdays
-  const weekOvertimeMs = weekElapsedTargetMs > 0 ? weekTotalMs - weekElapsedTargetMs : 0
+  // Overtime vs pace: compare only completed past days against their target
+  const weekOvertimeMs = weekElapsedTargetMs > 0 ? weekTotalOtherDaysMs - weekElapsedTargetMs : 0
   const showOvertime = weekElapsedTargetMs > 0 && Math.abs(weekOvertimeMs) >= 60000
 
   return (

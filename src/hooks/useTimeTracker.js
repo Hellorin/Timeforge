@@ -228,7 +228,7 @@ export function useTimeTracker() {
   // How many hours were expected based on elapsed workdays (Mon through today, excl. days off)
   const elapsedWorkdaysCount = weekdays.filter(d => {
     const key = toKey(d)
-    return !data.daysOff[key] && !isWeekend(key) && key <= todayKey
+    return !data.daysOff[key] && !isWeekend(key) && key < todayKey
   }).length
   const weekElapsedTargetMs = elapsedWorkdaysCount * 8 * 3600000
 
