@@ -225,6 +225,12 @@ export function useTimeTracker() {
     const sessions = data.days[key] || []
     return sum + sumSessionsMs(sessions)
   }, 0)
+  // How many hours were expected based on elapsed workdays (Mon through today, excl. days off)
+  const elapsedWorkdaysCount = weekdays.filter(d => {
+    const key = toKey(d)
+    return !data.daysOff[key] && !isWeekend(key) && key <= todayKey
+  }).length
+  const weekElapsedTargetMs = elapsedWorkdaysCount * 8 * 3600000
 
   return {
     isCheckedIn,
@@ -242,6 +248,7 @@ export function useTimeTracker() {
     setMilestoneCallback,
     weekTargetMs,
     weekTotalOtherDaysMs,
+    weekElapsedTargetMs,
     stats,
   }
 }
