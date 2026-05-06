@@ -38,9 +38,15 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   const weekDone = weekRemainingMs === 0
   const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
 
-  // Overtime vs pace: compare only completed past days against their target
+  // Overtime vs pace: compare only completed past days against their target (thru yesterday)
   const weekOvertimeMs = weekElapsedTargetMs > 0 ? weekTotalOtherDaysMs - weekElapsedTargetMs : 0
   const showOvertime = weekElapsedTargetMs > 0 && Math.abs(weekOvertimeMs) >= 60000
+
+  // Overtime as of today: past days + today's live hours vs target through today
+  const todayTargetMs = isTodayOff ? 0 : 8 * 3600000
+  const weekTodayElapsedTargetMs = weekElapsedTargetMs + todayTargetMs
+  const weekTodayOvertimeMs = weekTodayElapsedTargetMs > 0 ? (weekTotalOtherDaysMs + todayMs) - weekTodayElapsedTargetMs : 0
+  const showTodayOvertime = weekTodayElapsedTargetMs > 0 && !isTodayOff && Math.abs(weekTodayOvertimeMs) >= 60000
 
   return (
     <div className="today-summary">
@@ -74,6 +80,13 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
           {showOvertime && (
             <div className={`week-overtime${weekOvertimeMs > 0 ? ' week-overtime--ahead' : ' week-overtime--behind'}`}>
               {weekOvertimeMs > 0 ? `+${formatMsLeft(weekOvertimeMs)} overtime` : `${formatMsLeft(-weekOvertimeMs)} behind pace`}
+              <span className="week-overtime__label"> · thru yesterday</span>
+            </div>
+          )}
+          {showTodayOvertime && (
+            <div className={`week-overtime${weekTodayOvertimeMs > 0 ? ' week-overtime--ahead' : ' week-overtime--behind'}`}>
+              {weekTodayOvertimeMs > 0 ? `+${formatMsLeft(weekTodayOvertimeMs)} overtime` : `${formatMsLeft(-weekTodayOvertimeMs)} behind pace`}
+              <span className="week-overtime__label"> · so far today</span>
             </div>
           )}
         </div>
