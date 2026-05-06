@@ -325,6 +325,11 @@ body {
   color: var(--accent-in);
 }
 
+.week-overtime__label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
 /* ─── History ───────────────────────────────────────────────────────────── */
 .history-section {
   width: 100%;
