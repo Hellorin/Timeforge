@@ -10,7 +10,7 @@ function formatMsLeft(ms) {
   return `${h}h ${m}m`
 }
 
-export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, weekTargetMs, weekTotalOtherDaysMs }) {
+export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, weekTargetMs, weekTotalOtherDaysMs, weekElapsedTargetMs = 0 }) {
   const [now, setNow] = useState(Date.now())
 
   const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
@@ -37,6 +37,10 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   const weekRemainingMs = Math.max(0, weekTargetMs - weekTotalMs)
   const weekDone = weekRemainingMs === 0
   const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
+
+  // Overtime vs pace: how much ahead/behind relative to elapsed workdays
+  const weekOvertimeMs = weekElapsedTargetMs > 0 ? weekTotalMs - weekElapsedTargetMs : 0
+  const showOvertime = weekElapsedTargetMs > 0 && Math.abs(weekOvertimeMs) >= 60000
 
   return (
     <div className="today-summary">
@@ -67,6 +71,11 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
               style={{ width: `${weekPct}%` }}
             />
           </div>
+          {showOvertime && (
+            <div className={`week-overtime${weekOvertimeMs > 0 ? ' week-overtime--ahead' : ' week-overtime--behind'}`}>
+              {weekOvertimeMs > 0 ? `+${formatMsLeft(weekOvertimeMs)} overtime` : `${formatMsLeft(-weekOvertimeMs)} behind pace`}
+            </div>
+          )}
         </div>
       )}
     </div>
