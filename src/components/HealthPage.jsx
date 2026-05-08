@@ -52,7 +52,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     )
   }
 
-  const { recentAvgHours, weekCount, currentWeekHours, currentWeekTarget, status } = healthData
+  const { weekCount, status, cumulativeOvertimeHours } = healthData
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
 
@@ -72,19 +72,15 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
 
       <div className="health-metrics">
         <HealthMetric
-          label="This week"
-          value={decimalToHoursMinutes(currentWeekHours)}
-          sub={`of ${decimalToHoursMinutes(currentWeekTarget)} target`}
-        />
-        <HealthMetric
-          label={weekCount > 0 ? `${weekCount}-week avg` : 'Avg / week'}
-          value={decimalToHoursMinutes(recentAvgHours)}
-          sub="per week"
-        />
-        <HealthMetric
-          label="Daily avg"
+          label="Daily average"
           value={decimalToHoursMinutes(dailyAvg)}
           sub="per workday"
+        />
+        <HealthMetric
+          label="Cumulative overtime"
+          value={(cumulativeOvertimeHours >= 0 ? '+' : '-') + decimalToHoursMinutes(Math.abs(cumulativeOvertimeHours))}
+          sub="across all completed weeks"
+          modifier={cumulativeOvertimeHours >= 0 ? 'positive' : 'negative'}
         />
       </div>
 
@@ -109,10 +105,10 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   )
 }
 
-function HealthMetric({ label, value, sub }) {
+function HealthMetric({ label, value, sub, modifier }) {
   return (
     <div className="health-metric">
-      <span className="health-metric__value">{value}</span>
+      <span className={`health-metric__value${modifier ? ` health-metric__value--${modifier}` : ''}`}>{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
     </div>

@@ -241,7 +241,7 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
     .filter(([, sessions]) => sessions && sessions.length > 0)
 
   if (entries.length === 0) {
-    return { recentAvgHours: 0, recentAvgTarget: 0, weekCount: 0, currentWeekHours: 0, currentWeekTarget: 0, status: 'empty' }
+    return { recentAvgHours: 0, recentAvgTarget: 0, weekCount: 0, currentWeekHours: 0, currentWeekTarget: 0, status: 'empty', cumulativeOvertimeHours: 0 }
   }
 
   const perDay = entries
@@ -259,6 +259,8 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   // Last N completed weeks
   const completedWeeks = allWeeks.filter(w => w.mondayDate.getTime() < currentMonday.getTime())
   const recent = completedWeeks.slice(-weeksBack)
+
+  const cumulativeOvertimeHours = completedWeeks.reduce((sum, w) => sum + (w.hours - w.target), 0)
 
   let recentAvgHours
   let recentAvgTarget
@@ -288,5 +290,5 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   else if (recentAvgHours >= recentAvgTarget) status = 'ok'
   else status = 'not-enough'
 
-  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status }
+  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status, cumulativeOvertimeHours }
 }
