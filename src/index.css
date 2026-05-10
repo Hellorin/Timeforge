@@ -13,8 +13,9 @@
   --bg:          color-mix(in srgb, #fffbf5 var(--theme-mix), #1a1a2e);
   --surface:     color-mix(in srgb, #fdebd0 var(--theme-mix), #16213e);
   --surface-alt: color-mix(in srgb, #fdebd0 var(--theme-mix), #0f3460);
-  --accent-in:   color-mix(in srgb, #16a34a var(--theme-mix), #4ade80);
-  --accent-out:  color-mix(in srgb, #dc2626 var(--theme-mix), #f87171);
+  --accent-in:      color-mix(in srgb, #16a34a var(--theme-mix), #4ade80);
+  --accent-out:     color-mix(in srgb, #dc2626 var(--theme-mix), #f87171);
+  --accent-partial: color-mix(in srgb, #d97706 var(--theme-mix), #fbbf24);
   --text:        color-mix(in srgb, #1c1917 var(--theme-mix), #e2e8f0);
   --text-muted:  color-mix(in srgb, #78716c var(--theme-mix), #94a3b8);
   --radius: 12px;
@@ -402,12 +403,20 @@ body {
   background: var(--accent-in);
 }
 
+.history-week-status--partial {
+  background: var(--accent-partial);
+}
+
 .history-week-status--fail {
   background: var(--accent-out);
 }
 
 .history-week--success {
   box-shadow: inset 3px 0 0 var(--accent-in);
+}
+
+.history-week--partial {
+  box-shadow: inset 3px 0 0 var(--accent-partial);
 }
 
 .history-week--fail {

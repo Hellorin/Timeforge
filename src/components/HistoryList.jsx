@@ -67,7 +67,7 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
   )
 }
 
-function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, daysOff, isCurrentWeek }) {
+function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, daysOff, isCurrentWeek, cumulativeOvertimeBeforeMs }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const totalMs = days.reduce((sum, d) => sum + d.totalMs, 0)
   const label = getWeekLabel(weekKey)
@@ -80,7 +80,17 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, da
   let status = 'pending'
   if (weekTargetMs > 0) {
     if (totalMs >= weekTargetMs) status = 'success'
-    else if (!isCurrentWeek) status = 'fail'
+    else if (!isCurrentWeek) {
+      const deficitMs = weekTargetMs - totalMs
+      status = cumulativeOvertimeBeforeMs >= deficitMs ? 'partial' : 'fail'
+    }
+  }
+
+  const STATUS_ICON  = { success: '✓', partial: '~', fail: '✗' }
+  const STATUS_LABEL = {
+    success: 'Weekly target met',
+    partial: 'Weekly target met using banked overtime',
+    fail:    'Weekly target not met',
   }
 
   return (
@@ -94,9 +104,9 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, da
         {status !== 'pending' && (
           <span
             className={`history-week-status history-week-status--${status}`}
-            aria-label={status === 'success' ? 'Weekly target met' : 'Weekly target not met'}
+            aria-label={STATUS_LABEL[status]}
           >
-            {status === 'success' ? '✓' : '✗'}
+            {STATUS_ICON[status]}
           </span>
         )}
         <span className="history-total">{hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)}h</span>
@@ -119,6 +129,30 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
   const [currentYear, currentMonth] = todayKey.split('-').map(Number)
 
   const historyDays = allDays.filter(d => !d.isOff)
+
+  // For each week key, the cumulative overtime (ms) banked from all prior completed weeks.
+  const cumulativeOvertimeMap = useMemo(() => {
+    const weekData = new Map()
+    for (const day of allDays) {
+      if (day.isOff) continue
+      const wk = getWeekKey(day.date)
+      if (!weekData.has(wk)) {
+        const [y, m, d] = wk.split('-').map(Number)
+        const weekdays = getWeekDays(new Date(y, m - 1, d)).slice(0, 5)
+        const daysOffCount = weekdays.filter(date => daysOff[toDateKey(date)]).length
+        weekData.set(wk, { totalMs: 0, targetMs: (5 - daysOffCount) * 8 * 3600000 })
+      }
+      weekData.get(wk).totalMs += day.totalMs
+    }
+    const sorted = [...weekData.entries()].sort(([a], [b]) => a.localeCompare(b))
+    const map = new Map()
+    let running = 0
+    for (const [wk, { totalMs, targetMs }] of sorted) {
+      map.set(wk, running)
+      running += totalMs - targetMs
+    }
+    return map
+  }, [allDays, daysOff])
 
   const hasActiveSession = historyDays.some(d => d.sessions.some(s => s.checkOut === null))
   const [now, setNow] = useState(Date.now)
@@ -177,6 +211,7 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
             defaultExpanded={weekKey === currentWeekKey}
             daysOff={daysOff}
             isCurrentWeek={weekKey === currentWeekKey}
+            cumulativeOvertimeBeforeMs={cumulativeOvertimeMap.get(weekKey) ?? 0}
           />
         ))}
       </ul>
