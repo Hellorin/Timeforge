@@ -232,6 +232,12 @@ export function useTimeTracker() {
   }).length
   const weekElapsedTargetMs = elapsedWorkdaysCount * 8 * 3600000
 
+  // Cumulative overtime from all workdays before today (all history, not just this week)
+  const allPastWorkdayOvertimeMs = Object.entries(data.days).reduce((sum, [key, sessions]) => {
+    if (key >= todayKey || data.daysOff[key] || isWeekend(key)) return sum
+    return sum + sumSessionsMs(sessions) - 8 * 3600000
+  }, 0)
+
   return {
     isCheckedIn,
     checkIn,
@@ -249,6 +255,7 @@ export function useTimeTracker() {
     weekTargetMs,
     weekTotalOtherDaysMs,
     weekElapsedTargetMs,
+    allPastWorkdayOvertimeMs,
     stats,
   }
 }
