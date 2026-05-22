@@ -65,6 +65,13 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     <section className="health-page">
       {holidayCard}
 
+      {cumulativeOvertimeSeries && cumulativeOvertimeSeries.length >= 2 && (
+        <div className="overtime-chart-card">
+          <p className="overtime-chart-card__title">Cumulative overtime over time</p>
+          <OvertimeChart series={cumulativeOvertimeSeries} />
+        </div>
+      )}
+
       <div className={`health-status-card health-status-card--${cfg.modifier}`}>
         <div className="health-status-card__icon">{cfg.icon}</div>
         <p className="health-status-card__message">{cfg.message}</p>
@@ -84,13 +91,6 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
           modifier={cumulativeOvertimeHours >= 0 ? 'positive' : 'negative'}
         />
       </div>
-
-      {cumulativeOvertimeSeries && cumulativeOvertimeSeries.length >= 2 && (
-        <div className="overtime-chart-card">
-          <p className="overtime-chart-card__title">Cumulative overtime over time</p>
-          <OvertimeChart series={cumulativeOvertimeSeries} />
-        </div>
-      )}
 
       <div className="health-guide">
         <p className="health-guide__title">What the thresholds mean</p>
