@@ -262,6 +262,12 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
 
   const cumulativeOvertimeHours = completedWeeks.reduce((sum, w) => sum + (w.hours - w.target), 0)
 
+  const cumulativeOvertimeSeries = completedWeeks.reduce((acc, w) => {
+    const prev = acc.length > 0 ? acc[acc.length - 1].cumulative : 0
+    acc.push({ weekKey: w.mondayKey, cumulative: prev + (w.hours - w.target) })
+    return acc
+  }, [])
+
   let recentAvgHours
   let recentAvgTarget
   let weekCount
@@ -290,5 +296,5 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   else if (recentAvgHours >= recentAvgTarget) status = 'ok'
   else status = 'not-enough'
 
-  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status, cumulativeOvertimeHours }
+  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status, cumulativeOvertimeHours, cumulativeOvertimeSeries }
 }

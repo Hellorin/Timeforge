@@ -3,6 +3,7 @@ import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes, getTodayKey } from '../utils/time'
 import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from '../utils/holidays'
 import HolidayChart from './HolidayChart'
+import OvertimeChart from './OvertimeChart'
 
 const STATUS_CONFIG = {
   'too-much': {
@@ -52,7 +53,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     )
   }
 
-  const { weekCount, status, cumulativeOvertimeHours } = healthData
+  const { weekCount, status, cumulativeOvertimeHours, cumulativeOvertimeSeries } = healthData
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
 
@@ -83,6 +84,13 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
           modifier={cumulativeOvertimeHours >= 0 ? 'positive' : 'negative'}
         />
       </div>
+
+      {cumulativeOvertimeSeries && cumulativeOvertimeSeries.length >= 2 && (
+        <div className="overtime-chart-card">
+          <p className="overtime-chart-card__title">Cumulative overtime over time</p>
+          <OvertimeChart series={cumulativeOvertimeSeries} />
+        </div>
+      )}
 
       <div className="health-guide">
         <p className="health-guide__title">What the thresholds mean</p>
