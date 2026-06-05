@@ -1257,6 +1257,7 @@ input[type="time"]:focus {
   gap: 0.6rem;
 }
 
+.health-status-card--neutral { border-color: var(--text-muted); }
 .health-status-card--ok    { border-color: var(--accent-in); }
 .health-status-card--warn  { border-color: #f59e0b; }
 .health-status-card--danger { border-color: var(--accent-out); }
@@ -1663,3 +1664,69 @@ input[type="time"]:focus {
 .health-guide__item--ok   .health-guide__dot { background: var(--accent-in); }
 .health-guide__item--warn .health-guide__dot { background: #f59e0b; }
 .health-guide__item--danger .health-guide__dot { background: var(--accent-out); }
+
+.week-breakdown {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.week-breakdown__title {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.week-breakdown__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.week-breakdown__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.week-breakdown__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.week-breakdown__row--ok   .week-breakdown__dot { background: var(--accent-in); }
+.week-breakdown__row--warn .week-breakdown__dot { background: #f59e0b; }
+
+.week-breakdown__date {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.week-breakdown__hours {
+  font-variant-numeric: tabular-nums;
+}
+
+.week-breakdown__row--ok   .week-breakdown__hours { color: var(--accent-in); }
+.week-breakdown__row--warn .week-breakdown__hours { color: #f59e0b; }
+
+.week-breakdown__sep {
+  color: var(--text-muted);
+}
+
+.week-breakdown__target {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.week-breakdown__note {
+  font-size: 0.75rem;
+}

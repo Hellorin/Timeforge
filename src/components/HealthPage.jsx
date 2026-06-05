@@ -5,6 +5,11 @@ import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from 
 import HolidayChart from './HolidayChart'
 
 const STATUS_CONFIG = {
+  'no-data': {
+    icon: '📊',
+    message: 'Keep tracking — your health score will appear after your first full week',
+    modifier: 'neutral',
+  },
   'too-much': {
     icon: '😰',
     message: 'Take it easy, this is about your health',
@@ -52,7 +57,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     )
   }
 
-  const { weekCount, status, cumulativeOvertimeHours } = healthData
+  const { weekCount, status, cumulativeOvertimeHours, recentWeeks } = healthData
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
 
@@ -84,6 +89,8 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
         />
       </div>
 
+      <WeekBreakdown weeks={recentWeeks} />
+
       <div className="health-guide">
         <p className="health-guide__title">What the thresholds mean</p>
         <ul className="health-guide__list">
@@ -111,6 +118,37 @@ function HealthMetric({ label, value, sub, modifier }) {
       <span className={`health-metric__value${modifier ? ` health-metric__value--${modifier}` : ''}`}>{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
+    </div>
+  )
+}
+
+function formatWeekLabel(monday) {
+  return monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function WeekBreakdown({ weeks }) {
+  if (!weeks || weeks.length === 0) return null
+  return (
+    <div className="week-breakdown">
+      <p className="week-breakdown__title">Recent weeks</p>
+      <ul className="week-breakdown__list">
+        {weeks.map(w => {
+          const daysOff = w.target < 40 ? Math.round((40 - w.target) / 8) : 0
+          const ok = w.hours >= w.target
+          return (
+            <li key={w.mondayKey} className={`week-breakdown__row week-breakdown__row--${ok ? 'ok' : 'warn'}`}>
+              <span className="week-breakdown__dot" />
+              <span className="week-breakdown__date">{formatWeekLabel(w.mondayDate)}</span>
+              <span className="week-breakdown__hours">{decimalToHoursMinutes(w.hours)}</span>
+              <span className="week-breakdown__sep">/</span>
+              <span className="week-breakdown__target">
+                {decimalToHoursMinutes(w.target)}
+                {daysOff > 0 && <span className="week-breakdown__note"> ({daysOff}d off)</span>}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }

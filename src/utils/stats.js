@@ -285,10 +285,12 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   //   not-enough = below 100%
   const UPPER_RATIO = 45 / 40 // 1.125
   let status
-  if (recentAvgTarget === 0) status = 'not-enough'
+  if (weekCount === 0) status = 'no-data'
+  else if (recentAvgTarget === 0) status = 'not-enough'
   else if (recentAvgHours > recentAvgTarget * UPPER_RATIO) status = 'too-much'
   else if (recentAvgHours >= recentAvgTarget) status = 'ok'
+  else if (cumulativeOvertimeHours > 0) status = 'ok'
   else status = 'not-enough'
 
-  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status, cumulativeOvertimeHours }
+  return { recentAvgHours, recentAvgTarget, weekCount, currentWeekHours, currentWeekTarget, status, cumulativeOvertimeHours, recentWeeks: recent }
 }
