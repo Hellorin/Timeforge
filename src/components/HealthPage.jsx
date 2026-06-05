@@ -3,6 +3,7 @@ import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes, getTodayKey } from '../utils/time'
 import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from '../utils/holidays'
 import HolidayChart from './HolidayChart'
+import OvertimeChart from './OvertimeChart'
 
 const STATUS_CONFIG = {
   'no-data': {
@@ -57,7 +58,7 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     )
   }
 
-  const { weekCount, status, cumulativeOvertimeHours, recentWeeks } = healthData
+  const { weekCount, status, cumulativeOvertimeHours, cumulativeOvertimeSeries, recentWeeks } = healthData
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
 
@@ -68,6 +69,13 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   return (
     <section className="health-page">
       {holidayCard}
+
+      {cumulativeOvertimeSeries && cumulativeOvertimeSeries.length >= 2 && (
+        <div className="overtime-chart-card">
+          <p className="overtime-chart-card__title">Cumulative overtime over time</p>
+          <OvertimeChart series={cumulativeOvertimeSeries} />
+        </div>
+      )}
 
       <div className={`health-status-card health-status-card--${cfg.modifier}`}>
         <div className="health-status-card__icon">{cfg.icon}</div>
