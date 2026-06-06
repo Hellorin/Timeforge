@@ -34,6 +34,23 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     return computeRecentWeeklyAvg(days, daysOff)
   }, [allDays, daysOff])
 
+  const lastOvertimeDate = useMemo(() => {
+    const series = healthData.cumulativeOvertimeSeries
+    if (!series || series.length === 0) return null
+    const lastWeekKey = series[series.length - 1].weekKey
+    const [yr, mo, dy] = lastWeekKey.split('-').map(Number)
+    const friday = new Date(yr, mo - 1, dy + 4)
+    return friday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }, [healthData])
+
+  const lastDayUpdated = useMemo(() => {
+    const daysWithData = allDays.filter(day => day.sessions && day.sessions.length > 0)
+    if (daysWithData.length === 0) return null
+    const maxKey = daysWithData.reduce((max, day) => day.date > max ? day.date : max, daysWithData[0].date)
+    const [yr, mo, dy] = maxKey.split('-').map(Number)
+    return new Date(yr, mo - 1, dy).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }, [allDays])
+
   const holidayCard = (
     <HolidayBalanceCard
       used={personalDaysUsedThisYear}
@@ -72,7 +89,10 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
 
       {cumulativeOvertimeSeries && cumulativeOvertimeSeries.length >= 2 && (
         <div className="overtime-chart-card">
-          <p className="overtime-chart-card__title">Cumulative overtime over time</p>
+          <div className="overtime-chart-card__header">
+            <p className="overtime-chart-card__title">Cumulative overtime over time</p>
+            {lastOvertimeDate && <span className="overtime-chart-card__updated">Updated {lastOvertimeDate}</span>}
+          </div>
           <OvertimeChart series={cumulativeOvertimeSeries} />
         </div>
       )}
@@ -88,12 +108,14 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
           label="Daily average"
           value={decimalToHoursMinutes(dailyAvg)}
           sub="per workday"
+          updatedAt={lastDayUpdated}
         />
         <HealthMetric
           label="Cumulative overtime"
           value={(cumulativeOvertimeHours >= 0 ? '+' : '-') + decimalToHoursMinutes(Math.abs(cumulativeOvertimeHours))}
           sub="across all completed weeks"
           modifier={cumulativeOvertimeHours >= 0 ? 'positive' : 'negative'}
+          updatedAt={lastOvertimeDate ?? lastDayUpdated}
         />
       </div>
 
@@ -120,12 +142,13 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   )
 }
 
-function HealthMetric({ label, value, sub, modifier }) {
+function HealthMetric({ label, value, sub, modifier, updatedAt }) {
   return (
     <div className="health-metric">
       <span className={`health-metric__value${modifier ? ` health-metric__value--${modifier}` : ''}`}>{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
+      {updatedAt && <span className="health-metric__updated">Updated {updatedAt}</span>}
     </div>
   )
 }
