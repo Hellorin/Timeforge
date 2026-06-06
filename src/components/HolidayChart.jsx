@@ -14,8 +14,19 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
   const year = today.getFullYear()
   const currentM = today.getMonth()
 
+  // First month to show: honour startDate if it falls within the current year.
+  const startMonth = useMemo(() => {
+    if (!startDate) return 0
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startDate)
+    if (!m) return 0
+    const y = Number(m[1])
+    if (y !== year) return 0
+    return Number(m[2]) - 1
+  }, [startDate, year])
+
   const data = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => {
+    return Array.from({ length: 12 - startMonth }, (_, idx) => {
+      const i = startMonth + idx
       const monthEnd = new Date(year, i + 1, 0)
       const monthEndKey = `${year}-${String(i + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`
       const earned = computeAccruedDays(startDate, allowance, monthEnd)
@@ -25,18 +36,20 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
       }, 0)
       return { month: i, earned, used }
     })
-  }, [daysOff, startDate, allowance, year])
+  }, [daysOff, startDate, allowance, year, startMonth])
 
   const maxY = Math.max(...data.map(d => Math.max(d.earned, d.used)), 1)
 
-  const xAt = i => PAD.l + (i / 11) * CW
+  const span = Math.max(data.length - 1, 1)
+  const xAt = i => PAD.l + ((i - startMonth) / span) * CW
   const yAt = v => PAD.t + CH * (1 - v / maxY)
 
-  // Split at current month so past = solid, future = dashed (shared point at currentM)
-  const earnedPast = data.slice(0, currentM + 1).map(d => `${xAt(d.month)},${yAt(d.earned)}`).join(' ')
-  const earnedFuture = data.slice(currentM).map(d => `${xAt(d.month)},${yAt(d.earned)}`).join(' ')
-  const usedPast = data.slice(0, currentM + 1).map(d => `${xAt(d.month)},${yAt(d.used)}`).join(' ')
-  const usedFuture = data.slice(currentM).map(d => `${xAt(d.month)},${yAt(d.used)}`).join(' ')
+  const pastData = data.filter(d => d.month <= currentM)
+  const futureData = data.filter(d => d.month >= currentM)
+  const earnedPast = pastData.map(d => `${xAt(d.month)},${yAt(d.earned)}`).join(' ')
+  const earnedFuture = futureData.map(d => `${xAt(d.month)},${yAt(d.earned)}`).join(' ')
+  const usedPast = pastData.map(d => `${xAt(d.month)},${yAt(d.used)}`).join(' ')
+  const usedFuture = futureData.map(d => `${xAt(d.month)},${yAt(d.used)}`).join(' ')
 
   const yTicks = [0, maxY / 2, maxY]
 
@@ -53,18 +66,20 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
       ))}
 
       {/* Earned line */}
-      <polyline points={earnedPast} className="holiday-chart__earned" />
-      <polyline points={earnedFuture} className="holiday-chart__earned holiday-chart__earned--future" />
+      {earnedPast && <polyline points={earnedPast} className="holiday-chart__earned" />}
+      {earnedFuture && <polyline points={earnedFuture} className="holiday-chart__earned holiday-chart__earned--future" />}
 
       {/* Used/planned line */}
-      <polyline points={usedPast} className="holiday-chart__used-line" />
-      <polyline points={usedFuture} className="holiday-chart__used-line holiday-chart__used-line--future" />
+      {usedPast && <polyline points={usedPast} className="holiday-chart__used-line" />}
+      {usedFuture && <polyline points={usedFuture} className="holiday-chart__used-line holiday-chart__used-line--future" />}
 
       {/* Today vertical marker */}
-      <line x1={xAt(currentM)} y1={PAD.t} x2={xAt(currentM)} y2={H - PAD.b} className="holiday-chart__today-line" />
+      {currentM >= startMonth && (
+        <line x1={xAt(currentM)} y1={PAD.t} x2={xAt(currentM)} y2={H - PAD.b} className="holiday-chart__today-line" />
+      )}
 
       {/* Month labels */}
-      {MONTH_LABELS.map((label, i) => (
+      {data.map(({ month: i }) => (
         <text
           key={i}
           x={xAt(i)}
@@ -72,7 +87,7 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
           textAnchor="middle"
           className={`holiday-chart__month-label${i === currentM ? ' holiday-chart__month-label--current' : ''}`}
         >
-          {label}
+          {MONTH_LABELS[i]}
         </text>
       ))}
 
