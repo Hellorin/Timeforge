@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes } from '../utils/time'
 import OvertimeChart from './OvertimeChart'
@@ -72,6 +72,8 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
     )
   }
 
+  const [showGuide, setShowGuide] = useState(false)
+
   const { weekCount, status, cumulativeOvertimeHours, cumulativeOvertimeSeries, recentWeeks } = healthData
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
@@ -96,7 +98,39 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
         <div className="health-status-card__icon">{cfg.icon}</div>
         <p className="health-status-card__message">{cfg.message}</p>
         <p className="health-status-card__sub">{avgLabel}</p>
+        <button
+          className="health-guide-btn"
+          onClick={() => setShowGuide(true)}
+          aria-label="What do these thresholds mean?"
+        >
+          ?
+        </button>
       </div>
+
+      {showGuide && (
+        <div className="health-guide-overlay" onClick={() => setShowGuide(false)}>
+          <div className="health-guide-popover" onClick={e => e.stopPropagation()}>
+            <div className="health-guide-popover__header">
+              <span className="health-guide-popover__title">What the thresholds mean</span>
+              <button className="health-guide-popover__close" onClick={() => setShowGuide(false)} aria-label="Close">✕</button>
+            </div>
+            <ul className="health-guide__list">
+              <li className="health-guide__item health-guide__item--ok">
+                <span className="health-guide__dot" />
+                <span><strong>On track</strong> — 100–112% of your weekly target (e.g. 40–45 h on a full week)</span>
+              </li>
+              <li className="health-guide__item health-guide__item--warn">
+                <span className="health-guide__dot" />
+                <span><strong>Under</strong> — below your weekly target. Could signal a risk.</span>
+              </li>
+              <li className="health-guide__item health-guide__item--danger">
+                <span className="health-guide__dot" />
+                <span><strong>Over</strong> — more than 112% of your target. Sustained overtime can hurt.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div className="health-metrics">
         <HealthMetric
@@ -116,24 +150,6 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
       </div>
 
       <WeekBreakdown weeks={recentWeeks} />
-
-      <div className="health-guide">
-        <p className="health-guide__title">What the thresholds mean</p>
-        <ul className="health-guide__list">
-          <li className="health-guide__item health-guide__item--ok">
-            <span className="health-guide__dot" />
-            <span><strong>On track</strong> — 100–112% of your weekly target (e.g. 40–45 h on a full week)</span>
-          </li>
-          <li className="health-guide__item health-guide__item--warn">
-            <span className="health-guide__dot" />
-            <span><strong>Under</strong> — below your weekly target. Could signal a risk.</span>
-          </li>
-          <li className="health-guide__item health-guide__item--danger">
-            <span className="health-guide__dot" />
-            <span><strong>Over</strong> — more than 112% of your target. Sustained overtime can hurt.</span>
-          </li>
-        </ul>
-      </div>
     </section>
   )
 }
