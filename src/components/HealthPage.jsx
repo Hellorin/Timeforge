@@ -51,6 +51,17 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
     return new Date(yr, mo - 1, dy).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }, [allDays])
 
+  const dailyAvgSince = useMemo(() => {
+    const year = new Date().getFullYear()
+    if (employmentStartDate) {
+      const [yr, mo, dy] = employmentStartDate.split('-').map(Number)
+      if (yr === year) {
+        return new Date(yr, mo - 1, dy).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      }
+    }
+    return new Date(year, 0, 1).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }, [employmentStartDate])
+
   const holidayCard = (
     <HolidayBalanceCard
       used={personalDaysUsedThisYear}
@@ -108,7 +119,8 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
           label="Daily average"
           value={decimalToHoursMinutes(dailyAvg)}
           sub="per workday"
-          updatedAt={lastDayUpdated}
+          updatedAt={dailyAvgSince}
+          updatedLabel="Since"
         />
         <HealthMetric
           label="Cumulative overtime"
@@ -142,13 +154,13 @@ export default function HealthPage({ stats, allDays, daysOff, personalDaysUsedTh
   )
 }
 
-function HealthMetric({ label, value, sub, modifier, updatedAt }) {
+function HealthMetric({ label, value, sub, modifier, updatedAt, updatedLabel = 'Updated' }) {
   return (
     <div className="health-metric">
       <span className={`health-metric__value${modifier ? ` health-metric__value--${modifier}` : ''}`}>{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
-      {updatedAt && <span className="health-metric__updated">Updated {updatedAt}</span>}
+      {updatedAt && <span className="health-metric__updated">{updatedLabel} {updatedAt}</span>}
     </div>
   )
 }
