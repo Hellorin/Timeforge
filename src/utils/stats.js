@@ -248,7 +248,8 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
     .filter(([key]) => !isDayOff(key, daysOff))
     .map(([key, sessions]) => ({ key, sessions, totalMs: sumSessionsMs(sessions, now) }))
 
-  const currentMonday = mondayOf(new Date())
+  const today = new Date()
+  const currentMonday = mondayOf(today)
   const allWeeks = buildWeeklyTotals(perDay, daysOff)
 
   // Current week
@@ -256,8 +257,14 @@ export function computeRecentWeeklyAvg(days, daysOff, weeksBack = 4) {
   const currentWeekHours = currentWeekData?.hours ?? 0
   const currentWeekTarget = currentWeekData?.target ?? DAY_TARGET_HOURS * 5
 
-  // Last N completed weeks
-  const completedWeeks = allWeeks.filter(w => w.mondayDate.getTime() < currentMonday.getTime())
+  // On weekends the work week is done — include the current week in completed set.
+  const dow = today.getDay()
+  const currentWeekDone = dow === 0 || dow === 6
+  const completedWeeks = allWeeks.filter(w =>
+    currentWeekDone
+      ? w.mondayDate.getTime() <= currentMonday.getTime()
+      : w.mondayDate.getTime() < currentMonday.getTime()
+  )
   const recent = completedWeeks.slice(-weeksBack)
 
   const cumulativeOvertimeHours = completedWeeks.reduce((sum, w) => sum + (w.hours - w.target), 0)
