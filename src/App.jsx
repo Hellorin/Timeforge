@@ -9,6 +9,7 @@ import CalendarView from './components/CalendarView'
 import DayEditModal from './components/DayEditModal'
 import CelebrationOverlay from './components/CelebrationOverlay'
 import HealthPage from './components/HealthPage'
+import HolidayPage from './components/HolidayPage'
 import { formatDateKey } from './utils/time'
 
 export default function App() {
@@ -71,16 +72,22 @@ export default function App() {
             onBulkSetDaysOffType={setDaysOffTypeBulk}
           />
         )}
+        {view === 'holiday' && (
+          <HolidayPage
+            used={personalDaysUsedThisYear}
+            daysOff={daysOff}
+            allowance={settings.annualHolidayAllowance}
+            onAllowanceChange={setAnnualHolidayAllowance}
+            startDate={settings.employmentStartDate}
+            onStartDateChange={setEmploymentStartDate}
+          />
+        )}
         {view === 'health' && (
           <HealthPage
             stats={stats}
             allDays={allDays}
             daysOff={daysOff}
-            personalDaysUsedThisYear={personalDaysUsedThisYear}
-            annualHolidayAllowance={settings.annualHolidayAllowance}
-            onSetAnnualHolidayAllowance={setAnnualHolidayAllowance}
             employmentStartDate={settings.employmentStartDate}
-            onSetEmploymentStartDate={setEmploymentStartDate}
           />
         )}
       </main>
@@ -112,8 +119,15 @@ export default function App() {
           <span className="tab-label">Calendar</span>
         </button>
         <button
-            className={`tab-btn${view === 'health' ? ' tab-btn--active' : ''}`}
-            onClick={() => setView('health')}
+          className={`tab-btn${view === 'holiday' ? ' tab-btn--active' : ''}`}
+          onClick={() => setView('holiday')}
+        >
+          <span className="tab-icon">🏖️</span>
+          <span className="tab-label">Holiday</span>
+        </button>
+        <button
+          className={`tab-btn${view === 'health' ? ' tab-btn--active' : ''}`}
+          onClick={() => setView('health')}
         >
           <span className="tab-icon">🫀</span>
           <span className="tab-label">Health</span>

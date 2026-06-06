@@ -1231,6 +1231,14 @@ input[type="time"]:focus {
   font-size: 0.9rem;
 }
 
+/* ─── Holiday Page ──────────────────────────────────────────────────────── */
+.holiday-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 /* ─── Health Page ───────────────────────────────────────────────────────── */
 .health-page {
   width: 100%;
