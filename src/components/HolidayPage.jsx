@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { getTodayKey } from '../utils/time'
 import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from '../utils/holidays'
+import { dayOffBaseType, dayOffFraction } from '../utils/dayOff'
 import HolidayChart from './HolidayChart'
 
 export default function HolidayPage({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange }) {
@@ -31,13 +32,12 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
   const overspent = available < 0
   const pct = accrued > 0 ? Math.min(100, (used / accrued) * 100) : 0
 
-  const futurePlannedKeys = useMemo(() =>
+  const planned = useMemo(() =>
     Object.entries(daysOff)
-      .filter(([k, v]) => v === 'personal' && k > todayKey && k.startsWith(`${year}-`))
-      .map(([k]) => k)
+      .filter(([k, v]) => dayOffBaseType(v) === 'personal' && k > todayKey && k.startsWith(`${year}-`))
+      .reduce((sum, [, v]) => sum + dayOffFraction(v), 0)
   , [daysOff, todayKey, year])
 
-  const planned = futurePlannedKeys.length
   const projected = used + planned
   const yearEndSurplus = proratedAllowance - projected
 
@@ -65,7 +65,7 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
       <p className="holiday-card__sub">
         {overspent
           ? `${formatHolidayDays(Math.abs(available))} days ahead of your accrual`
-          : `${formatHolidayDays(accrued)} earned so far · ${used} used`}
+          : `${formatHolidayDays(accrued)} earned so far · ${formatHolidayDays(used)} used`}
       </p>
       <div className="holiday-card__bar-track">
         <div className="holiday-card__bar-fill" style={{ width: `${pct}%` }} />
@@ -81,7 +81,7 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
           </span>
         </div>
         <p className="holiday-card__sub">
-          {used} used + {planned} planned = {projected} of {formatHolidayDays(proratedAllowance)} days
+          {formatHolidayDays(used)} used + {formatHolidayDays(planned)} planned = {formatHolidayDays(projected)} of {formatHolidayDays(proratedAllowance)} days
         </p>
       </div>
       <HolidayChart daysOff={daysOff} allowance={allowance} startDate={startDate} />

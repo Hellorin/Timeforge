@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { computeRecentWeeklyAvg } from '../utils/stats'
 import { decimalToHoursMinutes } from '../utils/time'
+import { formatHolidayDays } from '../utils/holidays'
 import OvertimeChart from './OvertimeChart'
 
 const STATUS_CONFIG = {
@@ -176,7 +177,7 @@ function WeekBreakdown({ weeks }) {
       <p className="week-breakdown__title">Recent weeks</p>
       <ul className="week-breakdown__list">
         {weeks.map(w => {
-          const daysOff = w.target < 40 ? Math.round((40 - w.target) / 8) : 0
+          const daysOff = w.target < 40 ? (40 - w.target) / 8 : 0
           const ok = w.hours >= w.target
           return (
             <li key={w.mondayKey} className={`week-breakdown__row week-breakdown__row--${ok ? 'ok' : 'warn'}`}>
@@ -186,7 +187,7 @@ function WeekBreakdown({ weeks }) {
               <span className="week-breakdown__sep">/</span>
               <span className="week-breakdown__target">
                 {decimalToHoursMinutes(w.target)}
-                {daysOff > 0 && <span className="week-breakdown__note"> ({daysOff}d off)</span>}
+                {daysOff > 0 && <span className="week-breakdown__note"> ({formatHolidayDays(daysOff)}d off)</span>}
               </span>
             </li>
           )

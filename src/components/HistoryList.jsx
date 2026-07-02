@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { formatDateKey, formatTime, toHoursMinutes, toDecimalHours, getWeekDays, sumSessionsMs } from '../utils/time'
+import { dayOffFraction } from '../utils/dayOff'
 
 function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -74,8 +75,8 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, da
 
   const [y, m, d] = weekKey.split('-').map(Number)
   const weekdays = getWeekDays(new Date(y, m - 1, d)).slice(0, 5)
-  const daysOffCount = weekdays.filter(date => daysOff[toDateKey(date)]).length
-  const weekTargetMs = (5 - daysOffCount) * 8 * 3600000
+  const daysOffSum = weekdays.reduce((sum, date) => sum + dayOffFraction(daysOff[toDateKey(date)]), 0)
+  const weekTargetMs = (5 - daysOffSum) * 8 * 3600000
 
   let status = 'pending'
   if (weekTargetMs > 0) {
@@ -139,8 +140,8 @@ export default function HistoryList({ allDays, todayKey, hoursFormat, daysOff = 
       if (!weekData.has(wk)) {
         const [y, m, d] = wk.split('-').map(Number)
         const weekdays = getWeekDays(new Date(y, m - 1, d)).slice(0, 5)
-        const daysOffCount = weekdays.filter(date => daysOff[toDateKey(date)]).length
-        weekData.set(wk, { totalMs: 0, targetMs: (5 - daysOffCount) * 8 * 3600000 })
+        const daysOffSum = weekdays.reduce((sum, date) => sum + dayOffFraction(daysOff[toDateKey(date)]), 0)
+        weekData.set(wk, { totalMs: 0, targetMs: (5 - daysOffSum) * 8 * 3600000 })
       }
       weekData.get(wk).totalMs += day.totalMs
     }

@@ -10,7 +10,7 @@ function formatMsLeft(ms) {
   return `${h}h ${m}m`
 }
 
-export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs = 0 }) {
+export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, todayTargetMs = 8 * 3600000, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs = 0 }) {
   const [now, setNow] = useState(Date.now())
 
   const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
@@ -38,8 +38,9 @@ export default function TodaySummary({ todaySessions, hoursFormat, onToggleForma
   const weekDone = weekRemainingMs === 0
   const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
 
-  // Overtime as of today: cumulative all-time past overtime + today's live hours vs 8h target
-  const todayOvertimeMs = !isTodayOff ? allPastWorkdayOvertimeMs + todayMs - 8 * 3600000 : 0
+  // Overtime as of today: cumulative all-time past overtime + today's live hours vs today's target
+  // (halved on a half day off)
+  const todayOvertimeMs = !isTodayOff ? allPastWorkdayOvertimeMs + todayMs - todayTargetMs : 0
   const showTodayOvertime = !isTodayOff && todaySessions.length > 0 && Math.abs(todayOvertimeMs) >= 60000
 
   return (
