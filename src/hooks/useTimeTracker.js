@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { getTodayKey, sumSessionsMs, toDecimalHours, isWeekend, getWeekDays, computeWeekProgress } from '../utils/time'
 import { computeGlobalStats } from '../utils/stats'
+import { dayOffFraction, dayOffBaseType, isValidDayOffType } from '../utils/dayOff'
 
 function toKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -50,7 +51,7 @@ function migrateDaysOff(data) {
     if (v === true) {
       next[k] = 'personal'
       changed = true
-    } else if (v === 'personal' || v === 'official' || v === 'unpaid') {
+    } else if (isValidDayOffType(v)) {
       next[k] = v
     }
   }
@@ -86,8 +87,9 @@ export function useTimeTracker() {
   const checkIn = useCallback(() => {
     setData(prev => {
       const key = getTodayKey()
-      // Prevent check-in on days off (including weekends)
-      if (prev.daysOff[key] || isWeekend(key)) return prev
+      // Prevent check-in on full days off (including weekends). Half days
+      // off still allow check-in for the working half of the day.
+      if (dayOffFraction(prev.daysOff[key]) === 1 || isWeekend(key)) return prev
       const next = { ...prev, days: { ...prev.days } }
       const todaySessions = [...(next.days[key] || [])]
       // Prevent double check-in
@@ -140,7 +142,7 @@ export function useTimeTracker() {
   const allDays = Object.entries(data.days)
     .filter(([, sessions]) => sessions.length > 0)
     .map(([date, sessions]) => {
-      const isOff = !!(data.daysOff[date] || isWeekend(date))
+      const isOff = dayOffFraction(data.daysOff[date]) === 1 || isWeekend(date)
       const totalMs = isOff ? 0 : sumSessionsMs(sessions)
       const autoCheckedOut = sessions.some(s => s.autoCheckedOut)
       return { date, sessions, totalMs, totalDecimal: toDecimalHours(totalMs), isOff, autoCheckedOut }
@@ -160,13 +162,14 @@ export function useTimeTracker() {
     })
   }, [])
 
-  // type: 'personal' | 'official' | 'unpaid' | null (null clears the day-off marker)
+  // type: 'personal' | 'personal-half' | 'official' | 'unpaid' | 'unpaid-half' | null
+  // (null clears the day-off marker)
   const setDayOffType = useCallback((dateKey, type) => {
     setData(prev => {
       const daysOff = { ...prev.daysOff }
       if (type === null) {
         delete daysOff[dateKey]
-      } else if (type === 'personal' || type === 'official' || type === 'unpaid') {
+      } else if (isValidDayOffType(type)) {
         daysOff[dateKey] = type
       } else {
         return prev
@@ -181,7 +184,7 @@ export function useTimeTracker() {
   // Weekends are skipped — they're implicitly off and can't carry a personal/official marker.
   const setDaysOffTypeBulk = useCallback((dateKeys, type) => {
     if (!Array.isArray(dateKeys) || dateKeys.length === 0) return
-    if (type !== null && type !== 'personal' && type !== 'official' && type !== 'unpaid') return
+    if (type !== null && !isValidDayOffType(type)) return
     setData(prev => {
       const daysOff = { ...prev.daysOff }
       for (const dateKey of dateKeys) {
@@ -198,7 +201,11 @@ export function useTimeTracker() {
     })
   }, [])
 
-  const isTodayOff = !!(data.daysOff[todayKey] || isWeekend(todayKey))
+  // Fraction of today expected to be worked: 0 on a full day off or weekend,
+  // 0.5 on a half day off, 1 otherwise.
+  const todayWorkFraction = isWeekend(todayKey) ? 0 : 1 - dayOffFraction(data.daysOff[todayKey])
+  const isTodayOff = todayWorkFraction === 0
+  const todayTargetMs = todayWorkFraction * 8 * 3600000
 
   const stats = useMemo(() => computeGlobalStats(data.days, data.daysOff), [data.days, data.daysOff])
 
@@ -207,7 +214,7 @@ export function useTimeTracker() {
     const todayKey = getTodayKey()
     let n = 0
     for (const [k, v] of Object.entries(data.daysOff)) {
-      if (v === 'personal' && k.startsWith(prefix) && k <= todayKey) n++
+      if (dayOffBaseType(v) === 'personal' && k.startsWith(prefix) && k <= todayKey) n += dayOffFraction(v)
     }
     return n
   }, [data.daysOff])
@@ -217,25 +224,28 @@ export function useTimeTracker() {
   // Week progress — all in raw ms for minute-level precision (live today added in TodaySummary)
   const weekDays = getWeekDays()
   const weekdays = weekDays.slice(0, 5)
-  const daysOffCount = weekdays.filter(d => data.daysOff[toKey(d)]).length
-  const weekTargetMs = (5 - daysOffCount) * 8 * 3600000
+  const daysOffSum = weekdays.reduce((sum, d) => sum + dayOffFraction(data.daysOff[toKey(d)]), 0)
+  const weekTargetMs = (5 - daysOffSum) * 8 * 3600000
   const weekTotalOtherDaysMs = weekDays.reduce((sum, date) => {
     const key = toKey(date)
-    if (key === todayKey || data.daysOff[key] || isWeekend(key)) return sum
+    if (key === todayKey || dayOffFraction(data.daysOff[key]) === 1 || isWeekend(key)) return sum
     const sessions = data.days[key] || []
     return sum + sumSessionsMs(sessions)
   }, 0)
   // How many hours were expected based on elapsed workdays (Mon through today, excl. days off)
-  const elapsedWorkdaysCount = weekdays.filter(d => {
+  const elapsedWorkFraction = weekdays.reduce((sum, d) => {
     const key = toKey(d)
-    return !data.daysOff[key] && !isWeekend(key) && key < todayKey
-  }).length
-  const weekElapsedTargetMs = elapsedWorkdaysCount * 8 * 3600000
+    if (isWeekend(key) || key >= todayKey) return sum
+    return sum + (1 - dayOffFraction(data.daysOff[key]))
+  }, 0)
+  const weekElapsedTargetMs = elapsedWorkFraction * 8 * 3600000
 
   // Cumulative overtime from all workdays before today (all history, not just this week)
   const allPastWorkdayOvertimeMs = Object.entries(data.days).reduce((sum, [key, sessions]) => {
-    if (key >= todayKey || data.daysOff[key] || isWeekend(key)) return sum
-    return sum + sumSessionsMs(sessions) - 8 * 3600000
+    if (key >= todayKey || isWeekend(key)) return sum
+    const fraction = dayOffFraction(data.daysOff[key])
+    if (fraction === 1) return sum
+    return sum + sumSessionsMs(sessions) - (1 - fraction) * 8 * 3600000
   }, 0)
 
   return {
@@ -250,6 +260,7 @@ export function useTimeTracker() {
     setDayOffType,
     setDaysOffTypeBulk,
     isTodayOff,
+    todayTargetMs,
     personalDaysUsedThisYear,
     setMilestoneCallback,
     weekTargetMs,

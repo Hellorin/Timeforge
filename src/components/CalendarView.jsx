@@ -1,19 +1,24 @@
 import { useRef, useState } from 'react'
 import { getTodayKey, isWeekend } from '../utils/time'
 import { buildDaysOffIcs, downloadIcsFile } from '../utils/icsExport'
+import { dayOffFraction } from '../utils/dayOff'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const DAY_OFF_EMOJI = {
   personal: '🌴',
+  'personal-half': '🌴½',
   official: '🇨🇭',
   unpaid: '💸',
+  'unpaid-half': '💸½',
   weekend: '🛋️',
 }
 const DAY_OFF_LABEL = {
   personal: 'Personal day off',
+  'personal-half': 'Personal half day off',
   official: 'Official day off',
   unpaid: 'Unpaid day off',
+  'unpaid-half': 'Unpaid half day off',
   weekend: 'Weekend',
 }
 
@@ -204,17 +209,18 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
           }, 0)
           const weekTotal = weekTotalMs / 3600000
           // row[0..4] = Mon–Fri; only weekdays count toward target
-          const daysOffCount = row.slice(0, 5).filter(d => daysOff[toDateKey(d)]).length
-          const weekTarget = (5 - daysOffCount) * 8
+          const daysOffSum = row.slice(0, 5).reduce((sum, d) => sum + dayOffFraction(daysOff[toDateKey(d)]), 0)
+          const weekTarget = (5 - daysOffSum) * 8
 
           // For the current week, prorate the target based on workdays elapsed so far
           const isCurrentWeek = row.some(date => toDateKey(date) === today)
           let effectiveTarget = weekTarget
           if (isCurrentWeek) {
-            const daysElapsed = row.slice(0, 5).filter(d => {
+            const daysElapsed = row.slice(0, 5).reduce((sum, d) => {
               const key = toDateKey(d)
-              return !daysOff[key] && !isWeekend(key) && key <= today
-            }).length
+              if (isWeekend(key) || key > today) return sum
+              return sum + (1 - dayOffFraction(daysOff[key]))
+            }, 0)
             effectiveTarget = daysElapsed * 8
           }
 
@@ -232,9 +238,10 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
                 const dayData = dayMap.get(key)
                 const isWeekendDay = isWeekend(key)
                 const isDayOff = !!daysOff[key] || isWeekendDay
-                const hasSessions = !isDayOff && dayData && dayData.sessions.length > 0
+                const isFullyOff = dayOffFraction(daysOff[key]) === 1 || isWeekendDay
+                const hasSessions = !isFullyOff && dayData && dayData.sessions.length > 0
 
-                const autoCheckedOut = !isDayOff && !!dayData?.autoCheckedOut
+                const autoCheckedOut = !isFullyOff && !!dayData?.autoCheckedOut
                 const isSelectable = selectMode && !isWeekendDay
                 const isSelected = selectedKeys.has(key)
 
@@ -333,6 +340,14 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
               🌴 Personal
             </button>
             <button
+              className="cal-bulk-btn cal-bulk-btn--personal"
+              onClick={() => applyBulk('personal-half')}
+              disabled={selectedKeys.size === 0}
+              title="Mark as half personal day off (counts half a day against allowance)"
+            >
+              🌴½ Personal ½
+            </button>
+            <button
               className="cal-bulk-btn cal-bulk-btn--official"
               onClick={() => applyBulk('official')}
               disabled={selectedKeys.size === 0}
@@ -347,6 +362,14 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
               title="Mark as unpaid day off (does not consume allowance)"
             >
               💸 Unpaid
+            </button>
+            <button
+              className="cal-bulk-btn cal-bulk-btn--unpaid"
+              onClick={() => applyBulk('unpaid-half')}
+              disabled={selectedKeys.size === 0}
+              title="Mark as half unpaid day off (does not consume allowance)"
+            >
+              💸½ Unpaid ½
             </button>
             <button
               className="cal-bulk-btn cal-bulk-btn--clear"

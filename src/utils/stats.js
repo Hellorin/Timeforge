@@ -1,4 +1,5 @@
 import { sumSessionsMs, toDecimalHours, isWeekend } from './time'
+import { dayOffFraction } from './dayOff'
 
 const MS_PER_HOUR = 3600000
 const DAY_TARGET_HOURS = 8
@@ -30,8 +31,11 @@ function addDays(date, n) {
   return copy
 }
 
+// A day only counts as "off" (excluded from stats, doesn't break streaks) if
+// it's off for the entire day. Half days off are treated as normal workdays
+// with a reduced target — see buildWeeklyTotals.
 function isDayOff(dateKey, daysOff) {
-  return !!(daysOff[dateKey] || isWeekend(dateKey))
+  return dayOffFraction(daysOff[dateKey]) === 1 || isWeekend(dateKey)
 }
 
 /**
@@ -209,18 +213,18 @@ export function buildWeeklyTotals(perDay, daysOff) {
   const weeks = []
   for (let m = new Date(firstMonday); m <= lastMonday; m = addDays(m, 7)) {
     let ms = 0
-    let offCount = 0
+    let offSum = 0
     for (let i = 0; i < 5; i++) {
       const d = addDays(m, i)
       const key = toKey(d)
-      if (daysOff[key]) offCount++
-      else ms += byKey.get(key) ?? 0
+      offSum += dayOffFraction(daysOff[key])
+      ms += byKey.get(key) ?? 0
     }
     weeks.push({
       mondayDate: new Date(m),
       mondayKey: toKey(m),
       hours: toDecimalHours(ms),
-      target: (5 - offCount) * DAY_TARGET_HOURS,
+      target: (5 - offSum) * DAY_TARGET_HOURS,
     })
   }
   return weeks

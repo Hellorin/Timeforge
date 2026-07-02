@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { formatDateKey, isWeekend } from '../utils/time'
+import { isHalfDayOff } from '../utils/dayOff'
 
 function isoToHHMM(iso) {
   const d = new Date(iso)
@@ -28,7 +29,9 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
   ]
 
   const isWeekendDay = isWeekend(dateKey)
-  const isDayOff = !!dayOffType || isWeekendDay
+  // A half day off still expects the other half to be worked, so sessions
+  // stay editable; only a full day off (or weekend) disables them.
+  const isFullDayOff = (!!dayOffType && !isHalfDayOff(dayOffType)) || isWeekendDay
 
   const [rows, setRows] = useState(() =>
     sessions.length > 0
@@ -36,7 +39,7 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
           checkIn: s.checkIn ? isoToHHMM(s.checkIn) : '',
           checkOut: s.checkOut ? isoToHHMM(s.checkOut) : ''
         }))
-      : isDayOff || isWeekendDay ? [] : DEFAULT_ROWS
+      : isFullDayOff ? [] : DEFAULT_ROWS
   )
 
   const handleKeyDown = useCallback((e) => {
@@ -92,6 +95,14 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
                 {dayOffType === 'personal' ? 'Personal ✓' : 'Personal Day Off'}
               </button>
               <button
+                className={`modal-day-off-btn${dayOffType === 'personal-half' ? ' modal-day-off-btn--active' : ''}`}
+                onClick={() => onSetDayOffType(dayOffType === 'personal-half' ? null : 'personal-half')}
+                type="button"
+                title="Counts half a day against your yearly holiday allowance"
+              >
+                {dayOffType === 'personal-half' ? 'Personal ½ ✓' : 'Personal ½ Day'}
+              </button>
+              <button
                 className={`modal-day-off-btn modal-day-off-btn--official${dayOffType === 'official' ? ' modal-day-off-btn--active' : ''}`}
                 onClick={() => onSetDayOffType(dayOffType === 'official' ? null : 'official')}
                 type="button"
@@ -107,11 +118,19 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
               >
                 {dayOffType === 'unpaid' ? 'Unpaid ✓' : 'Unpaid Day Off'}
               </button>
+              <button
+                className={`modal-day-off-btn modal-day-off-btn--unpaid${dayOffType === 'unpaid-half' ? ' modal-day-off-btn--active' : ''}`}
+                onClick={() => onSetDayOffType(dayOffType === 'unpaid-half' ? null : 'unpaid-half')}
+                type="button"
+                title="Half unpaid leave — does not consume your allowance"
+              >
+                {dayOffType === 'unpaid-half' ? 'Unpaid ½ ✓' : 'Unpaid ½ Day'}
+              </button>
             </>
           )}
         </div>
 
-        <div className={`modal-sessions${isDayOff ? ' modal-sessions--dimmed' : ''}`}>
+        <div className={`modal-sessions${isFullDayOff ? ' modal-sessions--dimmed' : ''}`}>
           {rows.length === 0 && (
             <p className="modal-empty">No sessions. Add one below.</p>
           )}
@@ -136,7 +155,7 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
           ))}
         </div>
 
-        <button className="modal-add-btn" onClick={addSession} disabled={isDayOff}>+ Add Session</button>
+        <button className="modal-add-btn" onClick={addSession} disabled={isFullDayOff}>+ Add Session</button>
 
         <div className="modal-actions">
           <button className="modal-save-btn" onClick={handleSave}>Save</button>

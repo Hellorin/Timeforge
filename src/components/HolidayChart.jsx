@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { computeAccruedDays, formatHolidayDays } from '../utils/holidays'
+import { dayOffBaseType, dayOffFraction } from '../utils/dayOff'
 
 const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D']
 
@@ -31,8 +32,8 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
       const monthEndKey = `${year}-${String(i + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`
       const earned = computeAccruedDays(startDate, allowance, monthEnd)
       const used = Object.entries(daysOff).reduce((n, [k, v]) => {
-        if (v !== 'personal' || !k.startsWith(`${year}-`)) return n
-        return k <= monthEndKey ? n + 1 : n
+        if (dayOffBaseType(v) !== 'personal' || !k.startsWith(`${year}-`)) return n
+        return k <= monthEndKey ? n + dayOffFraction(v) : n
       }, 0)
       return { month: i, earned, used }
     })

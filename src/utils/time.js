@@ -1,3 +1,5 @@
+import { dayOffFraction } from './dayOff'
+
 /**
  * Returns today's date key in "YYYY-MM-DD" format using local time.
  */
@@ -119,22 +121,23 @@ export function computeWeekProgress(weekDays, days, daysOff) {
 
   const weekTotal = weekDays.reduce((sum, date) => {
     const key = toKey(date)
-    if (daysOff[key]) return sum
+    if (dayOffFraction(daysOff[key]) === 1) return sum
     const sessions = days[key] || []
     return sum + toDecimalHours(sumSessionsMs(sessions))
   }, 0)
 
   const weekdays = weekDays.slice(0, 5) // Mon–Fri
-  const daysOffCount = weekdays.filter(d => daysOff[toKey(d)]).length
-  const weekTarget = (5 - daysOffCount) * 8
+  const daysOffSum = weekdays.reduce((sum, d) => sum + dayOffFraction(daysOff[toKey(d)]), 0)
+  const weekTarget = (5 - daysOffSum) * 8
 
   const isCurrentWeek = weekDays.some(d => toKey(d) === today)
   let effectiveTarget = weekTarget
   if (isCurrentWeek) {
-    const daysElapsed = weekdays.filter(d => {
+    const daysElapsed = weekdays.reduce((sum, d) => {
       const key = toKey(d)
-      return !daysOff[key] && !isWeekend(key) && key <= today
-    }).length
+      if (isWeekend(key) || key > today) return sum
+      return sum + (1 - dayOffFraction(daysOff[key]))
+    }, 0)
     effectiveTarget = daysElapsed * 8
   }
 
