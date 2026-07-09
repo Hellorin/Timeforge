@@ -10,9 +10,8 @@ function parseDateKey(str) {
   return date
 }
 
-export function computeAccruedDays(startDateKey, annualAllowance, today = new Date()) {
+export function computeAccruedDays(startDateKey, annualAllowance, today = new Date(), mode = 'gradual') {
   const allowance = Number(annualAllowance) || 0
-  const monthlyRate = allowance / 12
   const year = today.getFullYear()
 
   const yearStart = new Date(year, 0, 1)
@@ -20,6 +19,12 @@ export function computeAccruedDays(startDateKey, annualAllowance, today = new Da
   const earnFrom = (start && start > yearStart) ? start : yearStart
 
   if (earnFrom > today) return 0
+
+  // "Immediate" mode grants the full (hire-date-prorated) annual allowance
+  // as soon as it's earned, instead of ratcheting it up month by month.
+  if (mode === 'immediate') return computeProratedAllowance(startDateKey, allowance, year)
+
+  const monthlyRate = allowance / 12
 
   // Credit is given at the end of each calendar month, once it has fully
   // elapsed. The hire month is prorated using the same fraction as

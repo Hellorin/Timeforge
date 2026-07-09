@@ -6,11 +6,12 @@ const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D']
 
 const W = 300
 const H = 110
-const PAD = { t: 10, r: 8, b: 22, l: 26 }
+const PAD = { t: 22, r: 8, b: 22, l: 26 }
 const CW = W - PAD.l - PAD.r
 const CH = H - PAD.t - PAD.b
+const LEGEND_Y = 8
 
-export default function HolidayChart({ daysOff, allowance, startDate }) {
+export default function HolidayChart({ daysOff, allowance, startDate, accrualMode }) {
   const today = new Date()
   const year = today.getFullYear()
   const currentM = today.getMonth()
@@ -30,14 +31,14 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
       const i = startMonth + idx
       const monthEnd = new Date(year, i + 1, 0)
       const monthEndKey = `${year}-${String(i + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`
-      const earned = computeAccruedDays(startDate, allowance, monthEnd)
+      const earned = computeAccruedDays(startDate, allowance, monthEnd, accrualMode)
       const used = Object.entries(daysOff).reduce((n, [k, v]) => {
         if (dayOffBaseType(v) !== 'personal' || !k.startsWith(`${year}-`)) return n
         return k <= monthEndKey ? n + dayOffFraction(v) : n
       }, 0)
       return { month: i, earned, used }
     })
-  }, [daysOff, startDate, allowance, year, startMonth])
+  }, [daysOff, startDate, allowance, year, startMonth, accrualMode])
 
   const maxY = Math.max(...data.map(d => Math.max(d.earned, d.used)), 1)
 
@@ -93,10 +94,10 @@ export default function HolidayChart({ daysOff, allowance, startDate }) {
       ))}
 
       {/* Legend */}
-      <circle cx={W - PAD.r - 80} cy={PAD.t + 2} r={2.5} className="holiday-chart__legend-earned" />
-      <text x={W - PAD.r - 75} y={PAD.t + 4} className="holiday-chart__axis-label">Earned</text>
-      <circle cx={W - PAD.r - 38} cy={PAD.t + 2} r={2.5} className="holiday-chart__legend-used" />
-      <text x={W - PAD.r - 33} y={PAD.t + 4} className="holiday-chart__axis-label">Used</text>
+      <circle cx={W - PAD.r - 80} cy={LEGEND_Y} r={2.5} className="holiday-chart__legend-earned" />
+      <text x={W - PAD.r - 75} y={LEGEND_Y + 2} className="holiday-chart__axis-label">Earned</text>
+      <circle cx={W - PAD.r - 38} cy={LEGEND_Y} r={2.5} className="holiday-chart__legend-used" />
+      <text x={W - PAD.r - 33} y={LEGEND_Y + 2} className="holiday-chart__axis-label">Used</text>
     </svg>
   )
 }

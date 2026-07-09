@@ -4,6 +4,7 @@ const STORAGE_KEY = 'timeforgeSettings'
 const DEFAULTS = {
   annualHolidayAllowance: 25,
   employmentStartDate: null,
+  holidayAccrualMode: 'gradual',
 }
 
 function loadSettings() {
@@ -41,5 +42,14 @@ export function useAppSettings() {
     })
   }, [])
 
-  return { settings, setAnnualHolidayAllowance, setEmploymentStartDate }
+  const setHolidayAccrualMode = useCallback((value) => {
+    const v = value === 'immediate' ? 'immediate' : 'gradual'
+    setSettings(prev => {
+      const next = { ...prev, holidayAccrualMode: v }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  return { settings, setAnnualHolidayAllowance, setEmploymentStartDate, setHolidayAccrualMode }
 }

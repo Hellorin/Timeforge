@@ -4,7 +4,7 @@ import { computeProratedAllowance, computeAccruedDays, formatHolidayDays } from 
 import { dayOffBaseType, dayOffFraction } from '../utils/dayOff'
 import HolidayChart from './HolidayChart'
 
-export default function HolidayPage({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange }) {
+export default function HolidayPage({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange, accrualMode, onAccrualModeChange }) {
   return (
     <section className="holiday-page">
       <HolidayBalanceCard
@@ -14,19 +14,21 @@ export default function HolidayPage({ used, daysOff, allowance, onAllowanceChang
         onAllowanceChange={onAllowanceChange}
         startDate={startDate}
         onStartDateChange={onStartDateChange}
+        accrualMode={accrualMode}
+        onAccrualModeChange={onAccrualModeChange}
       />
     </section>
   )
 }
 
-function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange }) {
+function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, startDate, onStartDateChange, accrualMode, onAccrualModeChange }) {
   const [showSettings, setShowSettings] = useState(false)
   const today = new Date()
   const year = today.getFullYear()
   const todayKey = getTodayKey()
 
   const proratedAllowance = computeProratedAllowance(startDate, allowance, year)
-  const accrued = computeAccruedDays(startDate, allowance, today)
+  const accrued = computeAccruedDays(startDate, allowance, today, accrualMode)
   const isProrated = startDate && proratedAllowance !== allowance
   const available = accrued - used
   const overspent = available < 0
@@ -84,7 +86,7 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
           {formatHolidayDays(used)} used + {formatHolidayDays(planned)} planned = {formatHolidayDays(projected)} of {formatHolidayDays(proratedAllowance)} days
         </p>
       </div>
-      <HolidayChart daysOff={daysOff} allowance={allowance} startDate={startDate} />
+      <HolidayChart daysOff={daysOff} allowance={allowance} startDate={startDate} accrualMode={accrualMode} />
       <button
         type="button"
         className="holiday-card__edit-toggle"
@@ -95,6 +97,27 @@ function HolidayBalanceCard({ used, daysOff, allowance, onAllowanceChange, start
       </button>
       {showSettings && (
         <div className="holiday-card__settings">
+          <div className="holiday-card__field">
+            <span className="holiday-card__field-label">Accrual</span>
+            <div className="holiday-card__mode-toggle" role="radiogroup" aria-label="Holiday accrual mode">
+              <button
+                type="button"
+                className={`holiday-card__mode-btn${accrualMode !== 'immediate' ? ' holiday-card__mode-btn--active' : ''}`}
+                aria-pressed={accrualMode !== 'immediate'}
+                onClick={() => onAccrualModeChange('gradual')}
+              >
+                Gradually
+              </button>
+              <button
+                type="button"
+                className={`holiday-card__mode-btn${accrualMode === 'immediate' ? ' holiday-card__mode-btn--active' : ''}`}
+                aria-pressed={accrualMode === 'immediate'}
+                onClick={() => onAccrualModeChange('immediate')}
+              >
+                All at once
+              </button>
+            </div>
+          </div>
           <label className="holiday-card__field">
             <span className="holiday-card__field-label">Annual allowance</span>
             <span className="holiday-card__field-control">
