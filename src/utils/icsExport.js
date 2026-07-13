@@ -4,12 +4,12 @@
  * so re-imports update existing entries instead of duplicating them.
  */
 
-const SUMMARY_BY_TYPE = {
-  personal: 'Day Off (Personal)',
-  'personal-half': 'Day Off (Personal, Half Day)',
-  official: 'Day Off (Official)',
-  unpaid: 'Day Off (Unpaid)',
-  'unpaid-half': 'Day Off (Unpaid, Half Day)',
+import { DAY_OFF_BASE_TYPES, dayOffBaseType, isHalfDayOff } from './dayOff.js'
+
+function summaryForType(type) {
+  const t = DAY_OFF_BASE_TYPES.find(x => x.base === dayOffBaseType(type))
+  if (!t) return null
+  return isHalfDayOff(type) ? `Day Off (${t.label}, Half Day)` : `Day Off (${t.label})`
 }
 
 function pad2(n) {
@@ -46,7 +46,7 @@ function escapeIcsText(s) {
 /**
  * Builds an iCalendar string for the days off in the given month.
  *
- * @param {Record<string, 'personal' | 'personal-half' | 'official' | 'unpaid' | 'unpaid-half'>} daysOff
+ * @param {Record<string, string>} daysOff - values are DAY_OFF_TYPES from ./dayOff.js
  * @param {number} year - 4-digit year
  * @param {number} month - 0-based month (matches JS Date.getMonth)
  * @returns {string} iCalendar content with CRLF line endings
@@ -68,7 +68,7 @@ export function buildDaysOffIcs(daysOff, year, month) {
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 
   for (const [dateKey, type] of entries) {
-    const summary = SUMMARY_BY_TYPE[type]
+    const summary = summaryForType(type)
     if (!summary) continue
     lines.push(
       'BEGIN:VEVENT',
