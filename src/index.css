@@ -911,6 +911,7 @@ body {
 .cal-bulk-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 0.4rem;
   row-gap: 0.4rem;
 }
@@ -938,24 +939,23 @@ body {
   cursor: not-allowed;
 }
 
-.cal-bulk-btn--personal:hover:not(:disabled) {
-  border-color: var(--accent-in);
-  color: var(--accent-in);
-}
-
-.cal-bulk-btn--official:hover:not(:disabled) {
-  border-color: #60a5fa;
-  color: #60a5fa;
-}
-
-.cal-bulk-btn--unpaid:hover:not(:disabled) {
-  border-color: #f59e0b;
-  color: #f59e0b;
-}
-
 .cal-bulk-btn--clear:hover:not(:disabled) {
   border-color: var(--accent-out);
   color: var(--accent-out);
+}
+
+.cal-bulk-actions .dayoff-picker {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+
+.cal-bulk-actions .cal-bulk-btn--clear {
+  flex: 0 1 auto;
+  min-width: 5.5rem;
+}
+
+.cal-bulk-actions .dayoff-seg {
+  flex: 1 1 auto;
 }
 
 /* ─── Modal ─────────────────────────────────────────────────────────────── */
@@ -1097,14 +1097,79 @@ input[type="time"]:focus {
   color: var(--accent-in);
 }
 
-.modal-day-off-btn--official.modal-day-off-btn--active {
-  border-color: #60a5fa;
-  color: #60a5fa;
+/* ─── Day-off type picker (segmented control + half toggle) ───────────── */
+/* Shared between the day-edit modal and the calendar's bulk-select bar. */
+.dayoff-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.modal-day-off-btn--unpaid.modal-day-off-btn--active {
-  border-color: #f59e0b;
-  color: #f59e0b;
+.dayoff-picker__segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dayoff-seg {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.dayoff-seg:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.dayoff-seg:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dayoff-seg--active {
+  border-color: var(--seg-accent, var(--accent-in));
+  color: var(--seg-accent, var(--accent-in));
+}
+
+.dayoff-half-toggle {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.dayoff-half-toggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.dayoff-half-toggle--active {
+  border-color: var(--seg-accent, var(--accent-partial));
+  color: var(--seg-accent, var(--accent-partial));
+  background: color-mix(in srgb, transparent, var(--seg-accent, var(--accent-partial)) 12%);
+}
+
+.dayoff-half-toggle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .modal-sessions--dimmed {

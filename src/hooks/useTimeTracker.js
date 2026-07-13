@@ -162,8 +162,7 @@ export function useTimeTracker() {
     })
   }, [])
 
-  // type: 'personal' | 'personal-half' | 'official' | 'unpaid' | 'unpaid-half' | null
-  // (null clears the day-off marker)
+  // type: one of DAY_OFF_TYPES (see utils/dayOff.js), or null to clear the marker
   const setDayOffType = useCallback((dateKey, type) => {
     setData(prev => {
       const daysOff = { ...prev.daysOff }

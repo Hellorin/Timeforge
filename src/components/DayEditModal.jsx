@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { formatDateKey, isWeekend } from '../utils/time'
-import { isHalfDayOff } from '../utils/dayOff'
+import { isHalfDayOff, dayOffBaseType, DAY_OFF_BASE_TYPES } from '../utils/dayOff'
 
 function isoToHHMM(iso) {
   const d = new Date(iso)
@@ -32,6 +32,21 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
   // A half day off still expects the other half to be worked, so sessions
   // stay editable; only a full day off (or weekend) disables them.
   const isFullDayOff = (!!dayOffType && !isHalfDayOff(dayOffType)) || isWeekendDay
+
+  const activeBase = dayOffType ? dayOffBaseType(dayOffType) : null
+  const activeHalf = dayOffType ? isHalfDayOff(dayOffType) : false
+  const activeMeta = DAY_OFF_BASE_TYPES.find(t => t.base === activeBase)
+
+  function selectBase(base) {
+    if (activeBase === base) { onSetDayOffType(null); return }
+    const t = DAY_OFF_BASE_TYPES.find(x => x.base === base)
+    onSetDayOffType(activeHalf && t.allowsHalf ? `${base}-half` : base)
+  }
+
+  function toggleHalf() {
+    if (!activeMeta?.allowsHalf) return
+    onSetDayOffType(activeHalf ? activeBase : `${activeBase}-half`)
+  }
 
   const [rows, setRows] = useState(() =>
     sessions.length > 0
@@ -85,48 +100,33 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
           {isWeekendDay ? (
             <span className="modal-day-off-btn modal-day-off-btn--active modal-day-off-btn--static">Weekend</span>
           ) : (
-            <>
+            <div className="dayoff-picker">
+              <div className="dayoff-picker__segments" role="group" aria-label="Day off type">
+                {DAY_OFF_BASE_TYPES.map(t => (
+                  <button
+                    key={t.base}
+                    type="button"
+                    className={`dayoff-seg${activeBase === t.base ? ' dayoff-seg--active' : ''}`}
+                    style={{ '--seg-accent': t.color }}
+                    onClick={() => selectBase(t.base)}
+                    title={t.note}
+                  >
+                    <span>{t.emoji}</span> {t.label}
+                  </button>
+                ))}
+              </div>
               <button
-                className={`modal-day-off-btn${dayOffType === 'personal' ? ' modal-day-off-btn--active' : ''}`}
-                onClick={() => onSetDayOffType(dayOffType === 'personal' ? null : 'personal')}
                 type="button"
-                title="Counts against your yearly holiday allowance"
+                className={`dayoff-half-toggle${activeHalf ? ' dayoff-half-toggle--active' : ''}`}
+                style={activeMeta ? { '--seg-accent': activeMeta.color } : undefined}
+                onClick={toggleHalf}
+                disabled={!activeMeta?.allowsHalf}
+                aria-pressed={activeHalf}
+                title="Toggle half day"
               >
-                {dayOffType === 'personal' ? 'Personal ✓' : 'Personal Day Off'}
+                ½ Half day
               </button>
-              <button
-                className={`modal-day-off-btn${dayOffType === 'personal-half' ? ' modal-day-off-btn--active' : ''}`}
-                onClick={() => onSetDayOffType(dayOffType === 'personal-half' ? null : 'personal-half')}
-                type="button"
-                title="Counts half a day against your yearly holiday allowance"
-              >
-                {dayOffType === 'personal-half' ? 'Personal ½ ✓' : 'Personal ½ Day'}
-              </button>
-              <button
-                className={`modal-day-off-btn modal-day-off-btn--official${dayOffType === 'official' ? ' modal-day-off-btn--active' : ''}`}
-                onClick={() => onSetDayOffType(dayOffType === 'official' ? null : 'official')}
-                type="button"
-                title="Public holiday — does not consume your allowance"
-              >
-                {dayOffType === 'official' ? 'Official ✓' : 'Official Day Off'}
-              </button>
-              <button
-                className={`modal-day-off-btn modal-day-off-btn--unpaid${dayOffType === 'unpaid' ? ' modal-day-off-btn--active' : ''}`}
-                onClick={() => onSetDayOffType(dayOffType === 'unpaid' ? null : 'unpaid')}
-                type="button"
-                title="Unpaid leave — does not consume your allowance"
-              >
-                {dayOffType === 'unpaid' ? 'Unpaid ✓' : 'Unpaid Day Off'}
-              </button>
-              <button
-                className={`modal-day-off-btn modal-day-off-btn--unpaid${dayOffType === 'unpaid-half' ? ' modal-day-off-btn--active' : ''}`}
-                onClick={() => onSetDayOffType(dayOffType === 'unpaid-half' ? null : 'unpaid-half')}
-                type="button"
-                title="Half unpaid leave — does not consume your allowance"
-              >
-                {dayOffType === 'unpaid-half' ? 'Unpaid ½ ✓' : 'Unpaid ½ Day'}
-              </button>
-            </>
+            </div>
           )}
         </div>
 

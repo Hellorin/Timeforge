@@ -1,17 +1,24 @@
 /**
  * Day-off type helpers. A day-off marker is a string: a base type
- * ('personal' | 'official' | 'unpaid') optionally suffixed with '-half' to
- * mark a half day off (the other half is expected to be worked normally).
+ * (see DAY_OFF_BASE_TYPES) optionally suffixed with '-half' to mark a half
+ * day off (the other half is expected to be worked normally).
  */
 
-export const DAY_OFF_TYPES = ['personal', 'personal-half', 'official', 'unpaid', 'unpaid-half']
+export const DAY_OFF_BASE_TYPES = [
+  { base: 'personal', label: 'Personal', emoji: '🌴', color: 'var(--accent-in)', allowsHalf: true, note: 'Counts against your yearly holiday allowance' },
+  { base: 'sick', label: 'Sick', emoji: '🤒', color: '#a78bfa', allowsHalf: true, note: 'Sick leave — does not consume your allowance' },
+  { base: 'official', label: 'Official', emoji: '🇨🇭', color: '#60a5fa', allowsHalf: false, note: 'Public holiday — does not consume your allowance' },
+  { base: 'unpaid', label: 'Unpaid', emoji: '💸', color: '#f59e0b', allowsHalf: true, note: 'Unpaid leave — does not consume your allowance' },
+]
+
+export const DAY_OFF_TYPES = DAY_OFF_BASE_TYPES.flatMap(t => t.allowsHalf ? [t.base, `${t.base}-half`] : [t.base])
 
 export function isValidDayOffType(type) {
   return DAY_OFF_TYPES.includes(type)
 }
 
 export function isHalfDayOff(type) {
-  return type === 'personal-half' || type === 'unpaid-half'
+  return typeof type === 'string' && type.endsWith('-half')
 }
 
 // Fraction of the day taken off by the given marker (0 when unset).
@@ -23,4 +30,9 @@ export function dayOffFraction(type) {
 // Strips the '-half' suffix, e.g. 'personal-half' -> 'personal'.
 export function dayOffBaseType(type) {
   return isHalfDayOff(type) ? type.slice(0, -'-half'.length) : type
+}
+
+// Metadata (label/emoji/color/etc.) for the base type of the given marker.
+export function getDayOffMeta(type) {
+  return DAY_OFF_BASE_TYPES.find(t => t.base === dayOffBaseType(type))
 }

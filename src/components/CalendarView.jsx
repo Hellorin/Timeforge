@@ -1,25 +1,16 @@
 import { useRef, useState } from 'react'
 import { getTodayKey, isWeekend } from '../utils/time'
 import { buildDaysOffIcs, downloadIcsFile } from '../utils/icsExport'
-import { dayOffFraction } from '../utils/dayOff'
+import { dayOffFraction, dayOffBaseType, isHalfDayOff, DAY_OFF_BASE_TYPES } from '../utils/dayOff'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-const DAY_OFF_EMOJI = {
-  personal: '🌴',
-  'personal-half': '🌴½',
-  official: '🇨🇭',
-  unpaid: '💸',
-  'unpaid-half': '💸½',
-  weekend: '🛋️',
-}
-const DAY_OFF_LABEL = {
-  personal: 'Personal day off',
-  'personal-half': 'Personal half day off',
-  official: 'Official day off',
-  unpaid: 'Unpaid day off',
-  'unpaid-half': 'Unpaid half day off',
-  weekend: 'Weekend',
+function metaFor(kind) {
+  if (kind === 'weekend') return { emoji: '🛋️', label: 'Weekend' }
+  const t = DAY_OFF_BASE_TYPES.find(x => x.base === dayOffBaseType(kind))
+  if (!t) return { emoji: '❓', label: kind }
+  const half = isHalfDayOff(kind)
+  return { emoji: half ? `${t.emoji}½` : t.emoji, label: `${t.label}${half ? ' half' : ''} day off` }
 }
 
 function toDateKey(date) {
@@ -82,10 +73,12 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
   const touchStartRef = useRef(null)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState(() => new Set())
+  const [bulkHalf, setBulkHalf] = useState(false)
 
   function toggleSelectMode() {
     setSelectMode(m => {
       if (m) setSelectedKeys(new Set())
+      setBulkHalf(false)
       return !m
     })
   }
@@ -273,13 +266,14 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
                     <span className="cal-day-num">{date.getDate()}</span>
                     {isDayOff && (() => {
                       const kind = daysOff[key] || 'weekend'
+                      const { emoji, label } = metaFor(kind)
                       return (
                         <span
                           className="cal-day-off-badge cal-day-off-badge--emoji"
-                          aria-label={DAY_OFF_LABEL[kind]}
-                          title={DAY_OFF_LABEL[kind]}
+                          aria-label={label}
+                          title={label}
                         >
-                          {DAY_OFF_EMOJI[kind]}
+                          {emoji}
                         </span>
                       )
                     })()}
@@ -331,46 +325,32 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
             {selectedKeys.size} day{selectedKeys.size === 1 ? '' : 's'} selected
           </span>
           <div className="cal-bulk-actions">
-            <button
-              className="cal-bulk-btn cal-bulk-btn--personal"
-              onClick={() => applyBulk('personal')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as personal day off (counts against allowance)"
-            >
-              🌴 Personal
-            </button>
-            <button
-              className="cal-bulk-btn cal-bulk-btn--personal"
-              onClick={() => applyBulk('personal-half')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as half personal day off (counts half a day against allowance)"
-            >
-              🌴½ Personal ½
-            </button>
-            <button
-              className="cal-bulk-btn cal-bulk-btn--official"
-              onClick={() => applyBulk('official')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as official day off (public holiday)"
-            >
-              🇨🇭 Official
-            </button>
-            <button
-              className="cal-bulk-btn cal-bulk-btn--unpaid"
-              onClick={() => applyBulk('unpaid')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as unpaid day off (does not consume allowance)"
-            >
-              💸 Unpaid
-            </button>
-            <button
-              className="cal-bulk-btn cal-bulk-btn--unpaid"
-              onClick={() => applyBulk('unpaid-half')}
-              disabled={selectedKeys.size === 0}
-              title="Mark as half unpaid day off (does not consume allowance)"
-            >
-              💸½ Unpaid ½
-            </button>
+            <div className="dayoff-picker">
+              <div className="dayoff-picker__segments" role="group" aria-label="Day off type">
+                {DAY_OFF_BASE_TYPES.map(t => (
+                  <button
+                    key={t.base}
+                    type="button"
+                    className="dayoff-seg"
+                    style={{ '--seg-accent': t.color }}
+                    onClick={() => applyBulk(t.allowsHalf && bulkHalf ? `${t.base}-half` : t.base)}
+                    disabled={selectedKeys.size === 0}
+                    title={t.note}
+                  >
+                    <span>{t.emoji}</span> {t.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className={`dayoff-half-toggle${bulkHalf ? ' dayoff-half-toggle--active' : ''}`}
+                onClick={() => setBulkHalf(h => !h)}
+                aria-pressed={bulkHalf}
+                title="Apply as half day"
+              >
+                ½ Half day
+              </button>
+            </div>
             <button
               className="cal-bulk-btn cal-bulk-btn--clear"
               onClick={() => applyBulk(null)}
