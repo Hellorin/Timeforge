@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { formatDuration } from '../utils/time'
 
 export default function LiveTimer({ isCheckedIn, todaySessions }) {
-  const [tick, setTick] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     if (!isCheckedIn) return
-    const id = setInterval(() => setTick(t => t + 1), 1000)
+    const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [isCheckedIn])
 
@@ -15,7 +15,7 @@ export default function LiveTimer({ isCheckedIn, todaySessions }) {
   const openSession = todaySessions[todaySessions.length - 1]
   if (!openSession) return null
 
-  const elapsed = Date.now() - new Date(openSession.checkIn).getTime()
+  const elapsed = now - new Date(openSession.checkIn).getTime()
 
   return (
     <div className="live-timer" aria-live="polite" aria-atomic="true">

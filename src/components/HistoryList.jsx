@@ -52,8 +52,8 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
 
       {expanded && (
         <ul className="history-sessions">
-          {day.sessions.map((session, i) => (
-            <li key={i} className={`history-session${session.checkOut === null ? ' history-session--active' : ''}${session.autoCheckedOut ? ' history-session--auto' : ''}`}>
+          {day.sessions.map(session => (
+            <li key={session.checkIn} className={`history-session${session.checkOut === null ? ' history-session--active' : ''}${session.autoCheckedOut ? ' history-session--auto' : ''}`}>
               <span>{formatTime(session.checkIn)}</span>
               <span className="session-arrow">→</span>
               <span>

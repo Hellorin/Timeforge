@@ -8,9 +8,10 @@ const MIDPOINT  = (KNOB_REST + KNOB_WORK) / 2  // 72px — past here = "working"
 
 export default function SlideToggle({ isCheckedIn, onCheckIn, onCheckOut, todaySessions, isTodayOff }) {
   const lastSession = todaySessions[todaySessions.length - 1]
-  const lastActionTime = lastSession
-    ? isCheckedIn ? formatTime(lastSession.checkIn) : formatTime(lastSession.checkOut)
-    : null
+  let lastActionTime = null
+  if (lastSession) {
+    lastActionTime = isCheckedIn ? formatTime(lastSession.checkIn) : formatTime(lastSession.checkOut)
+  }
 
   const isDisabled = isTodayOff && !isCheckedIn
 

@@ -7,9 +7,9 @@ const CW = W - PAD.l - PAD.r
 const CH = H - PAD.t - PAD.b
 
 export default function OvertimeChart({ series }) {
-  if (!series || series.length < 2) return null
+  const memoData = useMemo(() => {
+    if (!series || series.length < 2) return null
 
-  const { points, minVal, maxVal, yAt, xAt, monthLabels, segments } = useMemo(() => {
     const n = series.length
     const values = series.map(d => d.cumulative)
     const minVal = Math.min(0, ...values)
@@ -40,7 +40,7 @@ export default function OvertimeChart({ series }) {
     let current = null
     for (let i = 0; i < points.length; i++) {
       const positive = points[i].v >= 0
-      if (!current || current.positive !== positive) {
+      if (current?.positive !== positive) {
         // If crossing zero, insert an interpolated zero-crossing point so lines meet on the axis.
         if (current && i > 0) {
           const prev = points[i - 1]
@@ -59,12 +59,14 @@ export default function OvertimeChart({ series }) {
       }
     }
 
-    return { points, minVal, maxVal, yAt, xAt, monthLabels, segments }
+    return { points, minVal, maxVal, yAt, monthLabels, segments }
   }, [series])
 
+  if (!memoData) return null
+
+  const { points, minVal, maxVal, yAt, monthLabels, segments } = memoData
+
   const yZero = yAt(0)
-  const yMin = yAt(minVal)
-  const yMax = yAt(maxVal)
 
   const fmtHours = v => {
     const abs = Math.abs(v)
@@ -94,9 +96,9 @@ export default function OvertimeChart({ series }) {
       )}
 
       {/* Data segments colored by sign */}
-      {segments.map((seg, i) => (
+      {segments.map(seg => (
         <polyline
-          key={i}
+          key={`${seg.positive}-${seg.pts[0].x}`}
           points={ptsStr(seg.pts)}
           className={`overtime-chart__line overtime-chart__line--${seg.positive ? 'positive' : 'negative'}`}
         />
@@ -114,8 +116,8 @@ export default function OvertimeChart({ series }) {
       )}
 
       {/* Month labels on X axis */}
-      {monthLabels.map((ml, i) => (
-        <text key={i} x={ml.x} y={H - 5} textAnchor="middle" className="overtime-chart__week-label">
+      {monthLabels.map(ml => (
+        <text key={ml.x} x={ml.x} y={H - 5} textAnchor="middle" className="overtime-chart__week-label">
           {ml.label}
         </text>
       ))}

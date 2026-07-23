@@ -61,6 +61,8 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
     return new Date(year, 0, 1).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }, [employmentStartDate])
 
+  const [showGuide, setShowGuide] = useState(false)
+
   if (!stats || stats.isEmpty) {
     return (
       <section className="health-page health-page--empty">
@@ -72,8 +74,6 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
       </section>
     )
   }
-
-  const [showGuide, setShowGuide] = useState(false)
 
   const { weekCount, status, cumulativeOvertimeHours, cumulativeOvertimeSeries, recentWeeks } = healthData
   const cfg = STATUS_CONFIG[status]

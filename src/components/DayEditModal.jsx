@@ -48,14 +48,20 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
     onSetDayOffType(activeHalf ? activeBase : `${activeBase}-half`)
   }
 
-  const [rows, setRows] = useState(() =>
-    sessions.length > 0
-      ? sessions.map(s => ({
-          checkIn: s.checkIn ? isoToHHMM(s.checkIn) : '',
-          checkOut: s.checkOut ? isoToHHMM(s.checkOut) : ''
-        }))
-      : isFullDayOff ? [] : DEFAULT_ROWS
-  )
+  const [rows, setRows] = useState(() => {
+    if (sessions.length > 0) {
+      return sessions.map((s, i) => ({
+        id: i,
+        checkIn: s.checkIn ? isoToHHMM(s.checkIn) : '',
+        checkOut: s.checkOut ? isoToHHMM(s.checkOut) : ''
+      }))
+    }
+    return isFullDayOff ? [] : DEFAULT_ROWS.map((r, i) => ({ id: i, ...r }))
+  })
+
+  function nextRowId(existingRows) {
+    return existingRows.reduce((max, r) => Math.max(max, r.id), -1) + 1
+  }
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') onClose()
@@ -66,16 +72,16 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  function updateRow(i, field, value) {
-    setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: value } : r))
+  function updateRow(id, field, value) {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r))
   }
 
-  function deleteRow(i) {
-    setRows(prev => prev.filter((_, idx) => idx !== i))
+  function deleteRow(id) {
+    setRows(prev => prev.filter(r => r.id !== id))
   }
 
   function addSession() {
-    setRows(prev => [...prev, { checkIn: currentHHMM(), checkOut: '' }])
+    setRows(prev => [...prev, { id: nextRowId(prev), checkIn: currentHHMM(), checkOut: '' }])
   }
 
   function handleSave() {
@@ -134,23 +140,23 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
           {rows.length === 0 && (
             <p className="modal-empty">No sessions. Add one below.</p>
           )}
-          {rows.map((row, i) => (
-            <div key={i} className="modal-session-row">
+          {rows.map(row => (
+            <div key={row.id} className="modal-session-row">
               <input
                 type="time"
                 value={row.checkIn}
-                onChange={e => updateRow(i, 'checkIn', e.target.value)}
+                onChange={e => updateRow(row.id, 'checkIn', e.target.value)}
                 aria-label="Check-in time"
               />
               <span className="modal-sep">→</span>
               <input
                 type="time"
                 value={row.checkOut}
-                onChange={e => updateRow(i, 'checkOut', e.target.value)}
+                onChange={e => updateRow(row.id, 'checkOut', e.target.value)}
                 aria-label="Check-out time"
                 placeholder="open"
               />
-              <button className="modal-delete-btn" onClick={() => deleteRow(i)} aria-label="Delete session">×</button>
+              <button className="modal-delete-btn" onClick={() => deleteRow(row.id)} aria-label="Delete session">×</button>
             </div>
           ))}
         </div>
