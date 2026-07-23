@@ -26,7 +26,7 @@ export default function App() {
   }, [setMilestoneCallback])
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isCheckedIn ? 'light' : 'dark')
+    document.documentElement.dataset.theme = isCheckedIn ? 'light' : 'dark'
     const color = isCheckedIn ? '#fffbf5' : '#1a1a2e'
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
   }, [isCheckedIn])

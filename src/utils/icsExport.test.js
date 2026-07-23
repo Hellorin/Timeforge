@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { buildDaysOffIcs } from './icsExport'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { buildDaysOffIcs, downloadIcsFile } from './icsExport'
 
 describe('buildDaysOffIcs', () => {
   it('includes only entries for the requested month', () => {
@@ -31,5 +31,30 @@ describe('buildDaysOffIcs', () => {
     const ics = buildDaysOffIcs({}, 2024, 2)
     expect(ics.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true)
     expect(ics.endsWith('END:VCALENDAR\r\n')).toBe(true)
+  })
+
+  it('sorts entries chronologically regardless of insertion order', () => {
+    const ics = buildDaysOffIcs({ '2024-03-20': 'personal', '2024-03-05': 'sick' }, 2024, 2)
+    expect(ics.indexOf('20240305')).toBeLessThan(ics.indexOf('20240320'))
+  })
+})
+
+describe('downloadIcsFile', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('creates a download link, clicks it, and revokes the object URL', () => {
+    const createObjectURL = vi.fn(() => 'blob:mock-url')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL })
+
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    downloadIcsFile('days-off.ics', 'CONTENT')
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
   })
 })

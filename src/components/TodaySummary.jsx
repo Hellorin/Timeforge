@@ -10,75 +10,105 @@ function formatMsLeft(ms) {
   return `${h}h ${m}m`
 }
 
-export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, todayTargetMs = 8 * 3600000, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs = 0 }) {
+function useNow(intervalMs) {
   const [now, setNow] = useState(Date.now())
 
-  const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
-
-  // Refresh every second while checked in, every 30s otherwise
   useEffect(() => {
-    const ms = isCheckedIn ? 1000 : 30000
-    const id = setInterval(() => setNow(Date.now()), ms)
+    const id = setInterval(() => setNow(Date.now()), intervalMs)
     return () => clearInterval(id)
-  }, [isCheckedIn])
+  }, [intervalMs])
 
+  return now
+}
+
+// Live week remaining: all in ms, truncated to the minute for display.
+// Overtime as of today: cumulative all-time past overtime + today's live hours vs today's target
+// (zeroed on a day off).
+function computeSummary({ todaySessions, hoursFormat, isTodayOff, todayTargetMs, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs, now }) {
   const showDaily = !isTodayOff && todaySessions.length > 0
   const showWeek = weekTargetMs > 0
-
   if (!showDaily && !showWeek) return null
 
   const totalMs = showDaily ? sumSessionsMs(todaySessions, now) : 0
   const displayTotal = hoursFormat === 'hhmm' ? toHoursMinutes(totalMs) : toDecimalHours(totalMs)
   const sessionCount = todaySessions.length
 
-  // Live week remaining: all in ms, truncated to the minute for display
   const todayMs = isTodayOff ? 0 : totalMs
   const weekTotalMs = weekTotalOtherDaysMs + todayMs
   const weekRemainingMs = Math.max(0, weekTargetMs - weekTotalMs)
   const weekDone = weekRemainingMs === 0
   const weekPct = Math.min(100, weekTargetMs > 0 ? (weekTotalMs / weekTargetMs) * 100 : 0)
 
-  // Overtime as of today: cumulative all-time past overtime + today's live hours vs today's target
-  // (halved on a half day off)
   const todayOvertimeMs = !isTodayOff ? allPastWorkdayOvertimeMs + todayMs - todayTargetMs : 0
   const showTodayOvertime = !isTodayOff && todaySessions.length > 0 && Math.abs(todayOvertimeMs) >= 60000
+
+  return { showDaily, showWeek, displayTotal, sessionCount, weekRemainingMs, weekDone, weekPct, showTodayOvertime, todayOvertimeMs }
+}
+
+function DailyTotal({ displayTotal, sessionCount, hoursFormat, onToggleFormat }) {
+  return (
+    <>
+      <div className="today-total">{displayTotal}</div>
+      <div className="today-label">
+        hours today &middot; {sessionCount} session{sessionCount !== 1 ? 's' : ''}
+      </div>
+      <button className="format-toggle" onClick={onToggleFormat} title="Toggle hours format">
+        {hoursFormat === 'decimal' ? '8:MM' : '8.25'}
+      </button>
+    </>
+  )
+}
+
+function WeekProgress({ showDaily, weekDone, weekRemainingMs, weekPct, showTodayOvertime, todayOvertimeMs }) {
+  return (
+    <div className={`week-remaining${showDaily ? ' week-remaining--with-separator' : ''}`}>
+      {weekDone ? (
+        <span className="week-remaining__done">Week complete!</span>
+      ) : (
+        <span className="week-remaining__label">
+          <strong>{formatMsLeft(weekRemainingMs)}</strong> left this week
+        </span>
+      )}
+      <div className="week-bar-track">
+        <div
+          className={`week-bar-fill${weekDone ? ' week-bar-fill--done' : ''}`}
+          style={{ width: `${weekPct}%` }}
+        />
+      </div>
+      {showTodayOvertime && (
+        <div className={`week-overtime${todayOvertimeMs > 0 ? ' week-overtime--ahead' : ' week-overtime--behind'}`}>
+          {todayOvertimeMs > 0 ? `+${formatMsLeft(todayOvertimeMs)} overtime` : `${formatMsLeft(-todayOvertimeMs)} behind pace`}
+          <span className="week-overtime__label"> · so far today</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function TodaySummary({ todaySessions, hoursFormat, onToggleFormat, isTodayOff, todayTargetMs = 8 * 3600000, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs = 0 }) {
+  const isCheckedIn = todaySessions.length > 0 && !todaySessions[todaySessions.length - 1].checkOut
+  const now = useNow(isCheckedIn ? 1000 : 30000)
+
+  const summary = computeSummary({ todaySessions, hoursFormat, isTodayOff, todayTargetMs, weekTargetMs, weekTotalOtherDaysMs, allPastWorkdayOvertimeMs, now })
+  if (!summary) return null
+
+  const { showDaily, showWeek, displayTotal, sessionCount, weekRemainingMs, weekDone, weekPct, showTodayOvertime, todayOvertimeMs } = summary
 
   return (
     <div className="today-summary">
       {showDaily && (
-        <>
-          <div className="today-total">{displayTotal}</div>
-          <div className="today-label">
-            hours today &middot; {sessionCount} session{sessionCount !== 1 ? 's' : ''}
-          </div>
-          <button className="format-toggle" onClick={onToggleFormat} title="Toggle hours format">
-            {hoursFormat === 'decimal' ? '8:MM' : '8.25'}
-          </button>
-        </>
+        <DailyTotal displayTotal={displayTotal} sessionCount={sessionCount} hoursFormat={hoursFormat} onToggleFormat={onToggleFormat} />
       )}
 
       {showWeek && (
-        <div className={`week-remaining${showDaily ? ' week-remaining--with-separator' : ''}`}>
-          {weekDone ? (
-            <span className="week-remaining__done">Week complete!</span>
-          ) : (
-            <span className="week-remaining__label">
-              <strong>{formatMsLeft(weekRemainingMs)}</strong> left this week
-            </span>
-          )}
-          <div className="week-bar-track">
-            <div
-              className={`week-bar-fill${weekDone ? ' week-bar-fill--done' : ''}`}
-              style={{ width: `${weekPct}%` }}
-            />
-          </div>
-          {showTodayOvertime && (
-            <div className={`week-overtime${todayOvertimeMs > 0 ? ' week-overtime--ahead' : ' week-overtime--behind'}`}>
-              {todayOvertimeMs > 0 ? `+${formatMsLeft(todayOvertimeMs)} overtime` : `${formatMsLeft(-todayOvertimeMs)} behind pace`}
-              <span className="week-overtime__label"> · so far today</span>
-            </div>
-          )}
-        </div>
+        <WeekProgress
+          showDaily={showDaily}
+          weekDone={weekDone}
+          weekRemainingMs={weekRemainingMs}
+          weekPct={weekPct}
+          showTodayOvertime={showTodayOvertime}
+          todayOvertimeMs={todayOvertimeMs}
+        />
       )}
     </div>
   )
