@@ -131,7 +131,9 @@ export function useTimeTracker() {
       // Detect milestone crossing
       const crossedDaily = dailyBefore < 8 && dailyAfter >= 8
       const crossedWeekly = weekTarget > 0 && weekBefore < weekTarget && weekAfter >= weekTarget
-      const milestone = crossedWeekly ? 'weekly' : crossedDaily ? 'daily' : null
+      let milestone = null
+      if (crossedWeekly) milestone = 'weekly'
+      else if (crossedDaily) milestone = 'daily'
       if (milestone) milestoneCallbackRef.current?.(milestone)
 
       return next

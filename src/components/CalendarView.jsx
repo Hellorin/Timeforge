@@ -153,14 +153,15 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
     <div className="cal-container">
       <div className="cal-nav">
         <div className="cal-nav-group">
-          <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
+          <button type="button" className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
           <span className="cal-month-label">
             {getMonthLabel(currentMonth.year, currentMonth.month)}
           </span>
-          <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
+          <button type="button" className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
         </div>
         <div className="cal-nav-actions">
           <button
+            type="button"
             className={`cal-nav-export${selectMode ? ' cal-nav-export--active' : ''}`}
             onClick={toggleSelectMode}
             title={selectMode ? 'Exit selection mode' : 'Select multiple days to mark as off'}
@@ -169,6 +170,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
             {selectMode ? 'Cancel' : 'Select'}
           </button>
           <button
+            type="button"
             className="cal-nav-export"
             onClick={handleExportIcs}
             disabled={!canExport || selectMode}
@@ -194,7 +196,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
         </div>
 
         {/* Day rows */}
-        {rows.map((row, ri) => {
+        {rows.map((row) => {
           // Use raw ms for both comparison and display to match the track page
           const weekTotalMs = row.reduce((sum, date) => {
             const key = toDateKey(date)
@@ -223,7 +225,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
           const pct = weekTargetMs > 0 ? Math.min((weekTotalMs / weekTargetMs) * 100, 100) : 0
 
           return (
-            <div key={ri} className="cal-row">
+            <div key={toDateKey(row[0])} className="cal-row">
               {row.map(date => {
                 const key = toDateKey(date)
                 const isCurrentMonth = date >= firstDay && date <= lastDay
@@ -256,7 +258,8 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
                 }
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={key}
                     className={cls}
                     onClick={handleClick}
@@ -291,7 +294,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
                         <span> · {dayData.sessions.length} session{dayData.sessions.length !== 1 ? 's' : ''}</span>
                       </div>
                     )}
-                  </div>
+                  </button>
                 )
               })}
 
@@ -326,7 +329,8 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
           </span>
           <div className="cal-bulk-actions">
             <div className="dayoff-picker">
-              <div className="dayoff-picker__segments" role="group" aria-label="Day off type">
+              <fieldset className="dayoff-picker__segments">
+                <legend className="sr-only">Day off type</legend>
                 {DAY_OFF_BASE_TYPES.map(t => (
                   <button
                     key={t.base}
@@ -340,7 +344,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
                     <span>{t.emoji}</span> {t.label}
                   </button>
                 ))}
-              </div>
+              </fieldset>
               <button
                 type="button"
                 className={`dayoff-half-toggle${bulkHalf ? ' dayoff-half-toggle--active' : ''}`}
@@ -352,6 +356,7 @@ export default function CalendarView({ allDays, onDayClick, daysOff = {}, onBulk
               </button>
             </div>
             <button
+              type="button"
               className="cal-bulk-btn cal-bulk-btn--clear"
               onClick={() => applyBulk(null)}
               disabled={selectedKeys.size === 0}

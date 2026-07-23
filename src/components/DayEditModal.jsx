@@ -22,6 +22,10 @@ function currentHHMM() {
   return `${h}:${m}`
 }
 
+function nextRowId(existingRows) {
+  return existingRows.reduce((max, r) => Math.max(max, r.id), -1) + 1
+}
+
 export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOffType = null, onSetDayOffType }) {
   const DEFAULT_ROWS = [
     { checkIn: '08:00', checkOut: '12:00' },
@@ -59,10 +63,6 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
     return isFullDayOff ? [] : DEFAULT_ROWS.map((r, i) => ({ id: i, ...r }))
   })
 
-  function nextRowId(existingRows) {
-    return existingRows.reduce((max, r) => Math.max(max, r.id), -1) + 1
-  }
-
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') onClose()
   }, [onClose])
@@ -95,11 +95,12 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <button type="button" className="modal-backdrop__scrim" onClick={onClose} aria-label="Close dialog" />
+      <div className="modal" role="dialog" aria-modal="true" aria-label={formatDateKey(dateKey)}>
         <div className="modal-header">
           <span className="modal-title">{formatDateKey(dateKey)}</span>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
 
         <div className="modal-day-off-row">
@@ -107,7 +108,8 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
             <span className="modal-day-off-btn modal-day-off-btn--active modal-day-off-btn--static">Weekend</span>
           ) : (
             <div className="dayoff-picker">
-              <div className="dayoff-picker__segments" role="group" aria-label="Day off type">
+              <fieldset className="dayoff-picker__segments">
+                <legend className="sr-only">Day off type</legend>
                 {DAY_OFF_BASE_TYPES.map(t => (
                   <button
                     key={t.base}
@@ -120,7 +122,7 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
                     <span>{t.emoji}</span> {t.label}
                   </button>
                 ))}
-              </div>
+              </fieldset>
               <button
                 type="button"
                 className={`dayoff-half-toggle${activeHalf ? ' dayoff-half-toggle--active' : ''}`}
@@ -156,15 +158,15 @@ export default function DayEditModal({ dateKey, sessions, onSave, onClose, dayOf
                 aria-label="Check-out time"
                 placeholder="open"
               />
-              <button className="modal-delete-btn" onClick={() => deleteRow(row.id)} aria-label="Delete session">×</button>
+              <button type="button" className="modal-delete-btn" onClick={() => deleteRow(row.id)} aria-label="Delete session">×</button>
             </div>
           ))}
         </div>
 
-        <button className="modal-add-btn" onClick={addSession} disabled={isFullDayOff}>+ Add Session</button>
+        <button type="button" className="modal-add-btn" onClick={addSession} disabled={isFullDayOff}>+ Add Session</button>
 
         <div className="modal-actions">
-          <button className="modal-save-btn" onClick={handleSave}>Save</button>
+          <button type="button" className="modal-save-btn" onClick={handleSave}>Save</button>
         </div>
       </div>
     </div>

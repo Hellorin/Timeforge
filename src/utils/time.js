@@ -104,6 +104,13 @@ export function getWeekDays(referenceDate = new Date()) {
   return days
 }
 
+function toKey(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 /**
  * Given the 7 Date objects for a week, the raw days map from localStorage,
  * and the daysOff map, returns weekly progress metrics.
@@ -111,13 +118,6 @@ export function getWeekDays(referenceDate = new Date()) {
  */
 export function computeWeekProgress(weekDays, days, daysOff) {
   const today = getTodayKey()
-
-  function toKey(date) {
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
 
   const weekTotal = weekDays.reduce((sum, date) => {
     const key = toKey(date)

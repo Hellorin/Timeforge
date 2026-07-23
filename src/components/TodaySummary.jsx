@@ -52,7 +52,7 @@ function DailyTotal({ displayTotal, sessionCount, hoursFormat, onToggleFormat })
       <div className="today-label">
         hours today &middot; {sessionCount} session{sessionCount !== 1 ? 's' : ''}
       </div>
-      <button className="format-toggle" onClick={onToggleFormat} title="Toggle hours format">
+      <button type="button" className="format-toggle" onClick={onToggleFormat} title="Toggle hours format">
         {hoursFormat === 'decimal' ? '8:MM' : '8.25'}
       </button>
     </>

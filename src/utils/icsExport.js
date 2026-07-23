@@ -65,7 +65,7 @@ export function buildDaysOffIcs(daysOff, year, month) {
 
   const entries = Object.entries(daysOff)
     .filter(([key]) => key.startsWith(monthPrefix))
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .sort(([a], [b]) => a.localeCompare(b))
 
   for (const [dateKey, type] of entries) {
     const summary = summaryForType(type)
@@ -98,6 +98,6 @@ export function downloadIcsFile(filename, content) {
   a.download = filename
   document.body.appendChild(a)
   a.click()
-  document.body.removeChild(a)
+  a.remove()
   URL.revokeObjectURL(url)
 }

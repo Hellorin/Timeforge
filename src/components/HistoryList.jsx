@@ -29,6 +29,7 @@ function HistoryDay({ day, todayKey, hoursFormat }) {
   return (
     <li className="history-day">
       <button
+        type="button"
         className="history-day-header"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
@@ -97,6 +98,7 @@ function HistoryWeek({ weekKey, days, todayKey, hoursFormat, defaultExpanded, da
   return (
     <li className={`history-week history-week--${status}`}>
       <button
+        type="button"
         className="history-week-header"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}

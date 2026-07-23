@@ -30,7 +30,7 @@ describe('DayEditModal', () => {
     expect(onClose).not.toHaveBeenCalled()
     fireEvent.click(screen.getByLabelText('Close'))
     expect(onClose).toHaveBeenCalledTimes(1)
-    fireEvent.click(container.querySelector('.modal-backdrop'))
+    fireEvent.click(container.querySelector('.modal-backdrop__scrim'))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 

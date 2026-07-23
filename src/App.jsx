@@ -107,6 +107,7 @@ export default function App() {
 
       <nav className="tab-bar">
         <button
+          type="button"
           className={`tab-btn${view === 'tracker' ? ' tab-btn--active' : ''}`}
           onClick={() => setView('tracker')}
         >
@@ -114,6 +115,7 @@ export default function App() {
           <span className="tab-label">Track</span>
         </button>
         <button
+          type="button"
           className={`tab-btn${view === 'calendar' ? ' tab-btn--active' : ''}`}
           onClick={() => setView('calendar')}
         >
@@ -121,6 +123,7 @@ export default function App() {
           <span className="tab-label">Calendar</span>
         </button>
         <button
+          type="button"
           className={`tab-btn${view === 'holiday' ? ' tab-btn--active' : ''}`}
           onClick={() => setView('holiday')}
         >
@@ -128,6 +131,7 @@ export default function App() {
           <span className="tab-label">Holiday</span>
         </button>
         <button
+          type="button"
           className={`tab-btn${view === 'health' ? ' tab-btn--active' : ''}`}
           onClick={() => setView('health')}
         >

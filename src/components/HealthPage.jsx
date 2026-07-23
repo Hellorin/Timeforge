@@ -79,8 +79,9 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
   const cfg = STATUS_CONFIG[status]
   const dailyAvg = stats.averages.avgHoursPerWorkday
 
+  const weekNoun = weekCount === 1 ? 'week' : 'weeks'
   const avgLabel = weekCount > 0
-    ? `Based on your last ${weekCount} completed week${weekCount > 1 ? 's' : ''}`
+    ? `Based on your last ${weekCount} completed ${weekNoun}`
     : 'Based on your overall daily average'
 
   return (
@@ -90,6 +91,7 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
         <p className="health-status-card__message">{cfg.message}</p>
         <p className="health-status-card__sub">{avgLabel}</p>
         <button
+            type="button"
             className="health-guide-btn"
             onClick={() => setShowGuide(true)}
             aria-label="What do these thresholds mean?"
@@ -99,11 +101,12 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
       </div>
 
       {showGuide && (
-          <div className="health-guide-overlay" onClick={() => setShowGuide(false)}>
-            <div className="health-guide-popover" onClick={e => e.stopPropagation()}>
+          <div className="health-guide-overlay">
+            <button type="button" className="health-guide-overlay__scrim" onClick={() => setShowGuide(false)} aria-label="Close dialog" />
+            <div className="health-guide-popover" role="dialog" aria-modal="true" aria-label="What the thresholds mean">
               <div className="health-guide-popover__header">
                 <span className="health-guide-popover__title">What the thresholds mean</span>
-                <button className="health-guide-popover__close" onClick={() => setShowGuide(false)} aria-label="Close">✕</button>
+                <button type="button" className="health-guide-popover__close" onClick={() => setShowGuide(false)} aria-label="Close">✕</button>
               </div>
               <ul className="health-guide__list">
                 <li className="health-guide__item health-guide__item--ok">
@@ -156,9 +159,10 @@ export default function HealthPage({ stats, allDays, daysOff, employmentStartDat
 }
 
 function HealthMetric({ label, value, sub, modifier, updatedAt, updatedLabel = 'Updated' }) {
+  const modifierClass = modifier ? ` health-metric__value--${modifier}` : ''
   return (
     <div className="health-metric">
-      <span className={`health-metric__value${modifier ? ` health-metric__value--${modifier}` : ''}`}>{value}</span>
+      <span className={`health-metric__value${modifierClass}`}>{value}</span>
       <span className="health-metric__label">{label}</span>
       <span className="health-metric__sub">{sub}</span>
       {updatedAt && <span className="health-metric__updated">{updatedLabel} {updatedAt}</span>}
